@@ -1,11 +1,14 @@
-# How to test my Homework:
+# My homework for company Y_LAB:
+## How to start testing it:
 1) Clone repository:<br/>
-`git clone https://github.com/heshegto/RestaurantHomwork.git`
+`git clone https://github.com/heshegto/RestaurantHomework.git`
 2) Create virtual environment if you need it:<br/>
 `python -m venv venv`
 3) Install required packages:<br/>
 `pip install -r requirements.txt`
 4) Run your PostgreSQL server
-5) Start API:<br/>
+5) Change string `SQLALCHEMY_DATABASE_URL` with your database properties in `sql_app/database.py` file. Set `host` and
+`port`, if you need it set `username` and `password`
+6) Start API:<br/>
 `uvicorn main:app --reload`
-6) Start testing with Postman
+7) Start testing with Postman
