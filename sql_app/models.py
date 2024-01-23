@@ -1,7 +1,9 @@
 from sqlalchemy import Column, ForeignKey, String, UUID, Integer
 from sqlalchemy.orm import relationship
-from .database import Base
 import uuid
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 
 class BaseModel(Base):

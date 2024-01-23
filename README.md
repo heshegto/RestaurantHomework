@@ -7,8 +7,8 @@
 3) Install required packages:<br/>
 `pip install -r requirements.txt`
 4) Run your PostgreSQL server
-5) Change string `SQLALCHEMY_DATABASE_URL` with your database properties in `sql_app/database.py` file. Set `host` and
-`port`, if you need it set `username` and `password`
+5) Change string `SQLALCHEMY_DATABASE_URL` with your database properties in `sql_app/database.py` file. Set `host`,
+`port` and `database_name`, if you need it set `username` and `password`
 6) Start API:<br/>
 `uvicorn main:app --reload`
 7) Start testing with Postman
