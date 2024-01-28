@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sql_app import models, schemas
+from app import models, schemas
 from uuid import UUID
 from .crud_for_menu import get_menu_by_id
 from .crud_for_submenu import get_submenu_by_id
