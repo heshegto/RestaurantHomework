@@ -28,8 +28,8 @@ def test_create_dish():
 
     global dish_id
     new_dish_data = {
-        "title": "My submenu",
-        "description": "My submenu description",
+        "title": "My dish",
+        "description": "My dish description",
         "price": "3.20"
     }
     response = client.post(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes", json=new_dish_data)
@@ -75,8 +75,8 @@ def test_read_dishes():
 
 def test_update_dish():
     updated_data = {
-        "title": "My updated submenu",
-        "description": "My updated submenu description",
+        "title": "My updated dish",
+        "description": "My updated dish description",
         "price": "8.8"
     }
     response = client.patch(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}", json=updated_data)
