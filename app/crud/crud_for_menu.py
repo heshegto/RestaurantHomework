@@ -11,12 +11,19 @@ def get_menus(db: Session):
 def get_menu_by_id(db: Session, menu_id: UUID):
     result = db.query(models.Menu).filter(models.Menu.id == menu_id).first()
 
-    result.submenus_count, result.dishes_count = db.query(
-        func.count(models.SubMenu.id_menu).label('submenus_count'),
+    res = db.query(
+        func.count(models.SubMenu.id).label('submenus_count'),
         func.sum(models.SubMenu.dishes_count).label('dishes_count')
-    ).filter(models.SubMenu.parent_menu == menu_id
-             ).group_by(models.SubMenu.parent_menu)
+    ).group_by(models.SubMenu.id_menu).filter(models.SubMenu.id_menu == menu_id).first()
 
+    if res:
+        result.submenus_count, result.dishes_count = res
+        db.commit()
+        db.refresh(result)
+    elif result:
+        result.submenus_count, result.dishes_count = 0, 0
+        db.commit()
+        db.refresh(result)
     return result
 
 
