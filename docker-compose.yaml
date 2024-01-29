@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: 'app'
+    build: ./
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bash -c 'uvicorn app.main:app --host 0.0.0.0 --port 8000'
+    volumes:
+      - ./app:/src/app
+    ports:
+      - ${APP_HOST_PORT}:8000
+    restart: always
+    env_file:
+      - .env
+  db:
+    container_name: ${POSTGRES_DB_CONTAINER_NAME}
+    image: postgres:15.1-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_DB_USER}
+      - POSTGRES_PASSWORD = ${POSTGRES_DB_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - ${POSTGRES_DB_HOST_PORT}:5432
+    volumes:
+      - ./postgres:/var/lib/postgres/data
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_DB_USER}" ]
+
