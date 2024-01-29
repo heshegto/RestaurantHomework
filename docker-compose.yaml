@@ -3,7 +3,9 @@ version: '3.8'
 services:
   app:
     container_name: 'app'
-    build: ./
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy
@@ -15,6 +17,7 @@ services:
     restart: always
     env_file:
       - .env
+
   db:
     container_name: ${POSTGRES_DB_CONTAINER_NAME}
     image: postgres:15.1-alpine
@@ -24,7 +27,7 @@ services:
       - POSTGRES_PASSWORD = ${POSTGRES_DB_PASSWORD}
       - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
-      - ${POSTGRES_DB_HOST_PORT}:5432
+      - ${POSTGRES_DB_HOST_PORT}:${POSTGRES_DB_HOST_PORT}
     volumes:
       - ./postgres:/var/lib/postgres/data
     restart: always
@@ -33,3 +36,31 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_DB_USER}" ]
 
+  db_test:
+    container_name: ${POSTGRES_DB_CONTAINER_NAME_FOR_TESTS}
+    image: postgres:15.1-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_FOR_TESTS}
+      - POSTGRES_USER=${POSTGRES_DB_USER}
+      - POSTGRES_PASSWORD = ${POSTGRES_DB_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - ${POSTGRES_DB_HOST_PORT_FOR_TESTS}:${POSTGRES_DB_HOST_PORT_FOR_TESTS}
+    volumes:
+      - ./postgres:/var/lib/postgres/data
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB_FOR_TESTS} -U ${POSTGRES_DB_USER}" ]
+
+  tests:
+    container_name: 'tests'
+    build:
+      context: .
+      dockerfile: Dockerfile-tests
+    depends_on:
+      - db
+      - app
+    env_file:
+      - .env

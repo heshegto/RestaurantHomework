@@ -12,3 +12,7 @@
 6) Start API:<br/>
 `uvicorn app.main:app --reload`
 7) Start testing with Postman
+
+
+docker-compose up --build -d
+docker-compose run test
