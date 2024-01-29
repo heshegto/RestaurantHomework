@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
 from uuid import UUID
+from sqlalchemy import func
 
 
 def get_menus(db: Session):
@@ -8,7 +9,15 @@ def get_menus(db: Session):
 
 
 def get_menu_by_id(db: Session, menu_id: UUID):
-    return db.query(models.Menu).filter(models.Menu.id == menu_id).first()
+    result = db.query(models.Menu).filter(models.Menu.id == menu_id).first()
+
+    result.submenus_count, result.dishes_count = db.query(
+        func.count(models.SubMenu.id_menu).label('submenus_count'),
+        func.sum(models.SubMenu.dishes_count).label('dishes_count')
+    ).filter(models.SubMenu.parent_menu == menu_id
+             ).group_by(models.SubMenu.parent_menu)
+
+    return result
 
 
 def create_menu(db: Session, menu: schemas.MenuCreate):

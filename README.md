@@ -1,5 +1,13 @@
 # My homework for company Y_LAB:
-## How to start testing it:
+## How to start testing 2 homework:
+1) Clone repository:<br/>
+`git clone https://github.com/heshegto/RestaurantHomework.git`
+2) Run image build:<br/>
+`docker-compose up --build -d`
+3) Run tests:<br/>
+`docker-compose run tests`
+
+## How to start testing 1 homework:
 1) Clone repository:<br/>
 `git clone https://github.com/heshegto/RestaurantHomework.git`
 2) Create virtual environment if you need it:<br/>
@@ -12,7 +20,3 @@
 6) Start API:<br/>
 `uvicorn app.main:app --reload`
 7) Start testing with Postman
-
-
-docker-compose up --build -d
-docker-compose run test

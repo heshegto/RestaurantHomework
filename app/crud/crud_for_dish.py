@@ -25,7 +25,6 @@ def create_dish(db: Session, submenu_id: UUID, menu_id: UUID, dish: schemas.Dish
     db.add(db_dish)
 
     get_submenu_by_id(db, submenu_id, menu_id).dishes_count += 1
-    get_menu_by_id(db, menu_id).dishes_count += 1
 
     db.commit()
     db.refresh(db_dish)
@@ -49,6 +48,5 @@ def delete_dish(db: Session, dish_id: UUID, submenu_id: UUID, menu_id: UUID):
     if dish_to_delete:
         db.delete(dish_to_delete)
         get_submenu_by_id(db, submenu_id, menu_id).dishes_count -= 1
-        get_menu_by_id(db, menu_id).dishes_count -= 1
         db.commit()
     return dish_to_delete
