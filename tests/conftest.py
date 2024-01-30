@@ -7,8 +7,6 @@ from app.database import get_db
 from app.main import app
 from app.models import Base
 from fastapi.testclient import TestClient
-# from fastapi import FastAPI
-# app = FastAPI()
 
 
 TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(

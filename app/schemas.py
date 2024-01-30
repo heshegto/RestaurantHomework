@@ -12,20 +12,28 @@ class Base(BaseCreate):
 
 
 class Menu(Base):
-    submenus_count: int = 0
-    dishes_count: int = 0
+    pass
 
 
 class MenuCreate(BaseCreate):
     pass
 
 
-class SubMenu(Base):
+class MenuRead(Menu):
+    submenus_count: int = 0
     dishes_count: int = 0
+
+
+class SubMenu(Base):
+    pass
 
 
 class SubMenuCreate(BaseCreate):
     pass
+
+
+class SubMenuRead(SubMenu):
+    dishes_count: int = 0
 
 
 class Dish(Base):

@@ -14,12 +14,12 @@ app = FastAPI()
 ''' ----- Menu API ----- '''
 
 
-@app.get('/api/v1/menus', response_model=list[schemas.Menu])
+@app.get('/api/v1/menus', response_model=list[schemas.MenuRead])
 def read_menus(db: Session = Depends(get_db)):
     return crud.get_menus(db)
 
 
-@app.get('/api/v1/menus/{target_menu_id}', response_model=schemas.Menu)
+@app.get('/api/v1/menus/{target_menu_id}', response_model=schemas.MenuRead)
 def read_menu_by_id(target_menu_id: UUID, db: Session = Depends(get_db)):
     db_menu = crud.get_menu_by_id(db, target_menu_id)
     if db_menu is None:
@@ -45,12 +45,12 @@ def delete_menu(target_menu_id: UUID, db: Session = Depends(get_db)):
 ''' ----- SubMenu API ----- '''
 
 
-@app.get('/api/v1/menus/{target_menu_id}/submenus', response_model=list[schemas.SubMenu])
+@app.get('/api/v1/menus/{target_menu_id}/submenus', response_model=list[schemas.SubMenuRead])
 def read_submenus(target_menu_id: UUID, db: Session = Depends(get_db)):
     return crud.get_submenus(db, target_menu_id)
 
 
-@app.get('/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}', response_model=schemas.SubMenu)
+@app.get('/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}', response_model=schemas.SubMenuRead)
 def read_submenu_by_id(target_submenu_id: UUID, target_menu_id: UUID, db: Session = Depends(get_db)):
     db_submenu = crud.get_submenu_by_id(db, target_submenu_id, target_menu_id)
     if db_submenu is None:

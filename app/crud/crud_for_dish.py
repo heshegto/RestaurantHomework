@@ -1,8 +1,6 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
 from uuid import UUID
-from .crud_for_menu import get_menu_by_id
-from .crud_for_submenu import get_submenu_by_id
 
 
 def get_dishes(db: Session, submenu_id: UUID):
@@ -23,12 +21,7 @@ def create_dish(db: Session, submenu_id: UUID, menu_id: UUID, dish: schemas.Dish
         id_submenu=submenu_id
     )
     db.add(db_dish)
-
-    get_submenu_by_id(db, submenu_id, menu_id).dishes_count += 1
-
     db.commit()
-    db.refresh(db_dish)
-
     return db_dish
 
 
@@ -47,6 +40,5 @@ def delete_dish(db: Session, dish_id: UUID, submenu_id: UUID, menu_id: UUID):
     dish_to_delete = get_dish_by_id(db, dish_id, submenu_id)
     if dish_to_delete:
         db.delete(dish_to_delete)
-        get_submenu_by_id(db, submenu_id, menu_id).dishes_count -= 1
         db.commit()
     return dish_to_delete
