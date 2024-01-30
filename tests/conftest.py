@@ -11,13 +11,12 @@ from fastapi import Depends
 from .data import menu_data, submenu_data, dish_data
 
 
-# TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
-#     os.getenv('POSTGRES_DB_USER', 'postgres'),
-#     os.getenv('POSTGRES_DB_PASSWORD', ''),
-#     os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
-#     os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
-# )
-TEST_DATABASE_URL = "postgresql://postgres:5875@localhost:5432/postgres"
+TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
+    os.getenv('POSTGRES_DB_USER', 'postgres'),
+    os.getenv('POSTGRES_DB_PASSWORD', ''),
+    os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
+    os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
+)
 
 
 engine_test = create_engine(TEST_DATABASE_URL)

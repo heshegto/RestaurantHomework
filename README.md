@@ -2,9 +2,10 @@
 ## How to start testing 2 homework:
 1) Clone repository:<br/>
 `git clone https://github.com/heshegto/RestaurantHomework.git`
-2) Run image build:<br/>
+2) Change parametres in `.env` file
+3) Run image build:<br/>
 `docker-compose up --build -d`
-3) Run tests:<br/>
+4) Run tests:<br/>
 `docker-compose run tests`
 
 ## How to start testing 1 homework:
