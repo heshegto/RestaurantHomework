@@ -1,104 +1,96 @@
 from .conftest import client
 from uuid import UUID
+from .data import menu_data, submenu_data, dish_data, new_dish_data, updated_dish_data
+from app.models import Dish
 
 
-menu_id: UUID
-submenu_id: UUID
-dish_id: UUID
-
-
-def test_create_dish():
-    global menu_id
-    new_menu_data = {
-        "title": "My menu",
-        "description": "My menu description"
-    }
-    response = client.post("/api/v1/menus", json=new_menu_data)
-    assert response.status_code == 201
-    menu_id = response.json()["id"]
-
-    global submenu_id
-    new_submenu_data = {
-        "title": "My submenu",
-        "description": "My submenu description"
-    }
-    response = client.post(f"/api/v1/menus/{menu_id}/submenus", json=new_submenu_data)
-    assert response.status_code == 201
-    submenu_id = response.json()["id"]
-
-    global dish_id
-    new_dish_data = {
-        "title": "My dish",
-        "description": "My dish description",
-        "price": "3.20"
-    }
-    response = client.post(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes", json=new_dish_data)
+def test_create_dish(setup_test_database, new_data=new_dish_data):
+    response = client.post(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes", json=new_data)
     assert response.status_code == 201
 
     assert response.json()
     data = response.json()
 
-    assert "id" in data
-    dish_id = data["id"]
+    assert type(UUID(data["id"])) == UUID
+    assert data["title"] == new_data["title"]
+    assert data["description"] == new_data["description"]
 
-    assert data["title"] == new_dish_data["title"]
-    assert data["description"] == new_dish_data["description"]
-    assert data["price"] == new_dish_data["price"]
+    data_from_db = setup_test_database.query(Dish).filter(Dish.id == UUID(data["id"])).first()
+    assert data_from_db.id == UUID(data["id"])
+    assert data_from_db.title == new_data["title"]
+    assert data_from_db.description == new_data["description"]
 
 
-def test_read_dish():
-    response = client.get(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}")
+def test_read_dish_by_id(setup_test_database):
+    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
     assert response.status_code == 200
 
     assert response.json()
     data = response.json()
 
-    assert "id" in data
-    assert "title" in data
-    assert "description" in data
-    assert "price" in data
+    assert UUID(data["id"]) == dish_data["id"]
+    assert data["title"] == dish_data["title"]
+    assert data["description"] == dish_data["description"]
 
 
-def test_read_dishes():
-    response = client.get(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/")
+def test_read_dish_by_id_not_found():
+    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
+    assert response.status_code == 404
+    assert response.json()
+    assert response.json()['detail'] == "dish not found"
+
+
+def test_read_dishes(setup_test_database):
+    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes")
     assert response.status_code == 200
 
     assert response.json()
     data = response.json()
 
     assert data != []
-    assert "id" in data[0]
-    assert "title" in data[0]
-    assert "description" in data[0]
-    assert "price" in data[0]
+    assert UUID(data[0]["id"]) == dish_data["id"]
+    assert data[0]["title"] == dish_data["title"]
+    assert data[0]["description"] == dish_data["description"]
 
 
-def test_update_dish():
-    updated_data = {
-        "title": "My updated dish",
-        "description": "My updated dish description",
-        "price": "8.8"
-    }
-    response = client.patch(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}", json=updated_data)
+def test_read_dish_empty():
+    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_update_dish(setup_test_database, updated_data=updated_dish_data):
+    response = client.patch(
+        f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}",
+        json=updated_data
+    )
     assert response.status_code == 200
 
     assert response.json()
     data = response.json()
 
-    assert "id" in data
-    assert data["id"] == dish_id
-
+    assert UUID(data["id"]) == dish_data['id']
     assert data["title"] == updated_data["title"]
     assert data["description"] == updated_data["description"]
-    assert data["price"] == updated_data["price"] + '0'
+
+    data_from_db = setup_test_database.query(Dish).filter(Dish.id == dish_data['id']).first()
+    setup_test_database.refresh(data_from_db)
+    assert data_from_db.id == dish_data['id']
+    assert data_from_db.title == updated_data["title"]
+    assert data_from_db.description == updated_data["description"]
 
 
-def test_delete_submenu():
-    response = client.delete(f"/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}")
+def test_delete_dish(setup_test_database):
+    assert setup_test_database.query(Dish).filter(Dish.id == dish_data['id']).first() is not None
+
+    response = client.delete(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
     assert response.status_code == 200
 
     assert response.json()
     data = response.json()
 
-    assert "id" in data
-    assert data["id"] == dish_id
+    assert UUID(data["id"]) == dish_data['id']
+    assert data["title"] == dish_data["title"]
+    assert data["description"] == dish_data["description"]
+
+    assert setup_test_database.query(Dish).filter(Dish.id == dish_data['id']).first() is None
