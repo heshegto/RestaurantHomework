@@ -2,12 +2,11 @@ import pytest
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from app.database import get_db
 from app.main import app
 from app.models import *
 from fastapi.testclient import TestClient
-from fastapi import Depends
 from .data import menu_data, submenu_data, dish_data
 
 
