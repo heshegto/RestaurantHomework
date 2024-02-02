@@ -1,7 +1,7 @@
 from .conftest import client
 from uuid import UUID
 from .data import menu_data, submenu_data, new_submenu_data, updated_submenu_data
-from app.models import SubMenu
+from app.db.models import SubMenu
 
 
 def test_create_submenu(setup_test_database, new_data=new_submenu_data):

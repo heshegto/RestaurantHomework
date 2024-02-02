@@ -1,7 +1,7 @@
 from .conftest import client
 from uuid import UUID
 from .data import menu_data, submenu_data, dish_data, new_dish_data, updated_dish_data
-from app.models import Dish
+from app.db.models import Dish
 
 
 def test_create_dish(setup_test_database, new_data=new_dish_data):

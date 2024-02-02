@@ -1,7 +1,7 @@
 from .conftest import client
 from uuid import UUID
 from .data import menu_data, new_menu_data, updated_menu_data
-from app.models import Menu
+from app.db.models import Menu
 
 
 def test_create_menu(setup_test_database, new_data=new_menu_data):
