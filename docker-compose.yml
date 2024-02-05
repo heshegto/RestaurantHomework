@@ -9,6 +9,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     command: bash -c 'uvicorn app.main:app --host 0.0.0.0 --port ${APP_HOST_PORT}'
     volumes:
       - ./app:/src/app
@@ -40,7 +42,6 @@ services:
     image: redis:latest
     container_name: redis
     restart: always
-    command: bash -c 'sudo service redis-server start'
     ports:
       - "6379:6379"
     env_file:

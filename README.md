@@ -1,8 +1,17 @@
 # My homework for company Y_LAB:
+## How to start testing 3 homework:
+1) Clone repository:<br/>
+`git clone https://github.com/heshegto/RestaurantHomework.git`
+2) Change parameters in `.env` file
+3) Run app image build:<br/>
+`docker-compose -f dosker-compose.yml up --build -d`
+4) Run test image build:<br/>
+`docker-compose -f .dosker-compose-pytest.yml up --build -d`
+
 ## How to start testing 2 homework:
 1) Clone repository:<br/>
 `git clone https://github.com/heshegto/RestaurantHomework.git`
-2) Change parametres in `.env` file
+2) Change parameters in `.env` file
 3) Run image build:<br/>
 `docker-compose up --build -d`
 4) Run tests:<br/>
