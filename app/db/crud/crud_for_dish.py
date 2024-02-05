@@ -5,16 +5,14 @@ from uuid import UUID
 
 
 def get_dishes(db: Session, submenu_id: UUID):
-    return db.query(models.Dish).filter(models.Dish.id_submenu == submenu_id).all()
+    return db.query(models.Dish).filter(models.Dish.id_submenu == submenu_id)
 
 
 def get_dish_by_id(db: Session, dish_id: UUID, submenu_id: UUID):
-    return db.query(models.Dish).filter(
-        (models.Dish.id == dish_id) & (models.Dish.id_submenu == submenu_id)
-    ).first()
+    return get_dishes(db, submenu_id).filter(models.Dish.id == dish_id).first()
 
 
-def create_dish(db: Session, submenu_id: UUID, menu_id: UUID, dish: schemas.DishCreate):
+def create_dish(db: Session, submenu_id: UUID, dish: schemas.DishCreate):
     db_dish = models.Dish(
         title=dish.title,
         description=dish.description,
@@ -37,7 +35,7 @@ def patch_dish(db: Session, dish_id: UUID, submenu_id: UUID, dish: schemas.DishC
     return dish_to_update
 
 
-def delete_dish(db: Session, dish_id: UUID, submenu_id: UUID, menu_id: UUID):
+def delete_dish(db: Session, dish_id: UUID, submenu_id: UUID):
     dish_to_delete = get_dish_by_id(db, dish_id, submenu_id)
     if dish_to_delete:
         db.delete(dish_to_delete)

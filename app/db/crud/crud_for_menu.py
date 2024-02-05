@@ -12,21 +12,13 @@ def get_menus(db: Session):
         models.Menu.description,
         func.count(func.distinct(models.SubMenu.id)).label('submenus_count'),
         func.count(models.Dish.id).label('dishes_count'),
-    ).outerjoin(models.SubMenu, models.SubMenu.id_menu == models.Menu.id
-                ).outerjoin(models.Dish, models.Dish.id_submenu == models.SubMenu.id
-                            ).group_by(models.Menu.id).all()
+    ).outerjoin(models.SubMenu, models.Menu.child_menu
+                ).outerjoin(models.Dish, models.SubMenu.dish
+                            ).group_by(models.Menu.id)
 
 
 def get_menu_by_id(db: Session, menu_id: UUID):
-    return db.query(
-        models.Menu.id,
-        models.Menu.title,
-        models.Menu.description,
-        func.count(func.distinct(models.SubMenu.id)).label('submenus_count'),
-        func.count(models.Dish.id).label('dishes_count'),
-    ).outerjoin(models.SubMenu, models.SubMenu.id_menu == models.Menu.id
-                ).outerjoin(models.Dish, models.Dish.id_submenu == models.SubMenu.id
-                            ).filter(models.Menu.id == menu_id).group_by(models.Menu.id).first()
+    return get_menus(db).filter(models.Menu.id == menu_id).first()
 
 
 def __get_menu_by_id(db: Session, menu_id: UUID):

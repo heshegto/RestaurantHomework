@@ -21,3 +21,9 @@
 6) Start API:<br/>
 `uvicorn app.main:app --reload`
 7) Start testing with Postman
+
+
+
+ sudo service redis-server start
+ sudo service redis-server stop
+ redis-cli -h 127.0.0.1 -p 6379
