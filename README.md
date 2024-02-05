@@ -27,3 +27,9 @@
  sudo service redis-server start
  sudo service redis-server stop
  redis-cli -h 127.0.0.1 -p 6379
+
+pre-commit install
+pre-commit run --all-files
+
+flake8 version changed 6.0.0 -> 6.1.0
+mypy added string 'additional_dependencies: [types-redis==4.6.0.3]'

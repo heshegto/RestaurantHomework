@@ -2,12 +2,12 @@ from uuid import UUID
 
 from app.db.models import Dish
 
-from .conftest import client
+from .conftest import FieldType, client, reverse
 from .data import dish_data, menu_data, new_dish_data, submenu_data, updated_dish_data
 
 
 def test_create_dish(setup_test_database, new_data=new_dish_data):
-    response = client.post(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes", json=new_data)
+    response = client.post(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']), json=new_data)
     assert response.status_code == 201
 
     assert response.json()
@@ -24,7 +24,7 @@ def test_create_dish(setup_test_database, new_data=new_dish_data):
 
 
 def test_read_dish_by_id(setup_test_database):
-    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
+    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
     assert response.status_code == 200
 
     assert response.json()
@@ -36,14 +36,14 @@ def test_read_dish_by_id(setup_test_database):
 
 
 def test_read_dish_by_id_not_found():
-    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
+    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
     assert response.status_code == 404
     assert response.json()
     assert response.json()['detail'] == 'dish not found'
 
 
 def test_read_dishes(setup_test_database):
-    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes")
+    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']))
     assert response.status_code == 200
 
     assert response.json()
@@ -56,14 +56,14 @@ def test_read_dishes(setup_test_database):
 
 
 def test_read_dish_empty():
-    response = client.get(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes")
+    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']))
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_update_dish(setup_test_database, updated_data=updated_dish_data):
     response = client.patch(
-        f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}",
+        reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']),
         json=updated_data
     )
     assert response.status_code == 200
@@ -85,7 +85,7 @@ def test_update_dish(setup_test_database, updated_data=updated_dish_data):
 def test_delete_dish(setup_test_database):
     assert setup_test_database.query(Dish).filter(Dish.id == dish_data['id']).first() is not None
 
-    response = client.delete(f"/api/v1/menus/{menu_data['id']}/submenus/{submenu_data['id']}/dishes/{dish_data['id']}")
+    response = client.delete(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
     assert response.status_code == 200
 
     assert response.json()

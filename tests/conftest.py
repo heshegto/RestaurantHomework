@@ -1,4 +1,6 @@
 import os
+from enum import Enum
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -95,3 +97,24 @@ def setup_test_database(db):
     db.query(SubMenu).delete()
     db.query(Menu).delete()
     db.commit()
+
+
+class FieldType(Enum):
+    MENU = 1
+    SUBMENU = 2
+    DISH = 3
+
+
+def reverse(field: FieldType, menu_id: UUID | None = None, submenu_id: UUID | None = None, dish_id: UUID | None = None):
+    if menu_id is None:
+        return '/api/v1/menus/'
+    elif menu_id is not None and field == FieldType.MENU:
+        return f'/api/v1/menus/{menu_id}'
+    elif submenu_id is None:
+        return f'/api/v1/menus/{menu_id}/submenus/'
+    elif submenu_id is not None and field == FieldType.SUBMENU:
+        return f'/api/v1/menus/{menu_id}/submenus/{submenu_id}'
+    elif dish_id is None:
+        return f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes'
+    else:
+        return f'/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes{dish_id}'
