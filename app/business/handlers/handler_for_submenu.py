@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 
 from ...db.cache_database import get_redis
 from ...db.database import get_db
-from ...db.db_loaders import db_loader_for_submenu as db_loader
+from ...db.db_loaders.db_loader_for_submenu import SubmenuLoader
 from ..schemas import SubMenu, SubMenuCreate, SubMenuRead
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus', tags=['Submenu'])
+db_loader = SubmenuLoader()
 
 
 @router.get('', response_model=list[SubMenuRead], summary='Get list of submenus for a given menu')

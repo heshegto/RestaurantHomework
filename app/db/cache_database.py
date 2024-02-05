@@ -8,8 +8,9 @@ def get_redis():
     return Redis(host='localhost', port=6379, decode_responses=False)
 
 
-def delete_cache(keyword: str, cache: Redis):
-    cache.delete(keyword)
+def delete_cache(keywords: list[str], cache: Redis):
+    for keyword in keywords:
+        cache.delete(keyword)
 
 
 def create_cache(keyword: str, db_data: list | Query, cache: Redis):

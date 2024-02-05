@@ -36,31 +36,17 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_DB_USER}" ]
 
-  db_test:
-    container_name: ${POSTGRES_DB_CONTAINER_NAME_FOR_TESTS}
-    image: postgres:15.1-alpine
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB_FOR_TESTS}
-      - POSTGRES_USER=${POSTGRES_DB_USER}
-      - POSTGRES_PASSWORD = ${POSTGRES_DB_PASSWORD}
-      - POSTGRES_HOST_AUTH_METHOD=trust
-    ports:
-      - ${POSTGRES_DB_HOST_PORT_FOR_TESTS}:${POSTGRES_DB_HOST_PORT_FOR_TESTS}
-    volumes:
-      - ./postgres:/var/lib/postgres/data
+  redis:
+    image: redis:latest
+    container_name: redis
     restart: always
+    command: bash -c 'sudo service redis-server start'
+    ports:
+      - "6379:6379"
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB_FOR_TESTS} -U ${POSTGRES_DB_USER}" ]
-
-  tests:
-    container_name: ${TESTS_NAME}
-    build:
-      context: .
-      dockerfile: Dockerfile-tests
-    depends_on:
-      - db
-      - app
-    env_file:
-      - .env
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5

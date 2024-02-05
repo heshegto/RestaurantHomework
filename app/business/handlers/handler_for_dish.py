@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 
 from ...db.cache_database import get_redis
 from ...db.database import get_db
-from ...db.db_loaders import db_loader_for_dish as db_loader
+from ...db.db_loaders.db_loader_for_dish import DishLoader
 from ..schemas import Dish, DishCreate
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
+db_loader = DishLoader()
 
 
 @router.get('', response_model=list[Dish], summary='Get list of dishes for a given submenu')

@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 
 from ...db.cache_database import get_redis
 from ...db.database import get_db
-from ...db.db_loaders import db_loader_for_menu as db_loader
+from ...db.db_loaders.db_loader_for_menu import MenuLoader
 from ..schemas import Menu, MenuCreate, MenuRead
 
 router = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
+db_loader = MenuLoader()
 
 
 @router.get('', response_model=list[MenuRead], summary='Get list of all menus')

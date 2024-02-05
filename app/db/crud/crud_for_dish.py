@@ -1,45 +1,40 @@
 from uuid import UUID
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.query import Query
 
-from app.business import schemas
-from app.db import models
-
-
-def get_dishes(db: Session, submenu_id: UUID):
-    return db.query(models.Dish).filter(models.Dish.id_submenu == submenu_id)
+from ...business import schemas
+from ..models import Dish
+from .crud_base import BaseCRUDModel
 
 
-def get_dish_by_id(db: Session, dish_id: UUID, submenu_id: UUID):
-    return get_dishes(db, submenu_id).filter(models.Dish.id == dish_id).first()
+class DishCRUD(BaseCRUDModel):
+    def __init__(self) -> None:
+        self.model = Dish
 
-
-def create_dish(db: Session, submenu_id: UUID, dish: schemas.DishCreate):
-    db_dish = models.Dish(
-        title=dish.title,
-        description=dish.description,
-        price=f'{round(float(dish.price), 2):.2f}',
-        id_submenu=submenu_id
-    )
-    db.add(db_dish)
-    db.commit()
-    return db_dish
-
-
-def patch_dish(db: Session, dish_id: UUID, submenu_id: UUID, dish: schemas.DishCreate):
-    dish_to_update = get_dish_by_id(db, dish_id, submenu_id)
-    if dish_to_update:
-        dish_to_update.title = dish.title
-        dish_to_update.description = dish.description
-        dish_to_update.price = f'{round(float(dish.price), 2):.2f}'
+    def create_item(self, submenu_id: UUID, dish: schemas.DishCreate, db: Session) -> Query:
+        db_dish = self.model(
+            title=dish.title,
+            description=dish.description,
+            price=f'{round(float(dish.price), 2):.2f}',
+            id_submenu=submenu_id
+        )
+        db.add(db_dish)
         db.commit()
-        db.refresh(dish_to_update)
-    return dish_to_update
+        return db_dish
 
+    def read_all_items(self, submenu_id: UUID, db: Session) -> Query:
+        return db.query(self.model).filter(self.model.id_submenu == submenu_id)
 
-def delete_dish(db: Session, dish_id: UUID, submenu_id: UUID):
-    dish_to_delete = get_dish_by_id(db, dish_id, submenu_id)
-    if dish_to_delete:
-        db.delete(dish_to_delete)
-        db.commit()
-    return dish_to_delete
+    def read_item_by_id(self, dish_id: UUID, db: Session) -> Query:
+        return super()._get_item_by_id(dish_id, db)
+
+    def update_item(self, dish_id: UUID, dish: schemas.DishCreate, db: Session) -> Query:
+        dish_to_update = super()._get_item_by_id(dish_id, db)
+        if dish_to_update:
+            dish_to_update.title = dish.title
+            dish_to_update.description = dish.description
+            dish_to_update.price = f'{round(float(dish.price), 2):.2f}'
+            db.commit()
+            db.refresh(dish_to_update)
+        return dish_to_update
