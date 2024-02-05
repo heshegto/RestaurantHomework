@@ -1,8 +1,10 @@
+from uuid import UUID
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+
 from app.business import schemas
 from app.db import models
-from uuid import UUID
-from sqlalchemy import func
 
 
 def get_menus(db: Session):

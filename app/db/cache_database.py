@@ -1,5 +1,6 @@
-from redis import Redis
 import pickle
+
+from redis import Redis
 from sqlalchemy.orm.query import Query
 
 

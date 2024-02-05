@@ -36,7 +36,7 @@ repos:
 
 # Сканер стилистических ошибок, нарушающие договоренности PEP8
 -   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
     -   id: flake8
         exclude: "__init__.py"
@@ -47,4 +47,5 @@ repos:
     rev: v0.991
     hooks:
     -   id: mypy
+        additional_dependencies: [types-redis==4.6.0.3]
         exclude: 'migrations'

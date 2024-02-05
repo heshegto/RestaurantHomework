@@ -1,9 +1,11 @@
+from uuid import UUID
+
 from redis import Redis
 from sqlalchemy.orm import Session
-from app.db.crud import crud_for_menu as crud
-from app.db import cache_database
-from uuid import UUID
+
 from app.business import schemas
+from app.db import cache_database
+from app.db.crud import crud_for_menu as crud
 
 
 def get_all_menus(db: Session, cache: Redis):
