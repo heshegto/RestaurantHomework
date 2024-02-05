@@ -11,7 +11,7 @@ from ..crud.crud_for_dish import DishCRUD
 class DishLoader:
     crud = DishCRUD()
 
-    def get_all_dishes(self, submenu_id: UUID, menu_id: UUID, db: Session, cache: Redis):
+    def get_all_dishes(self, submenu_id: UUID, menu_id: UUID, db: Session, cache: Redis) -> list[dict]:
         keyword = f'menu:{str(menu_id)}:submenu:{str(submenu_id)}:dishes'
         data = cache_database.read_cache(keyword, cache)
         if data:
@@ -20,16 +20,30 @@ class DishLoader:
         cache_database.create_cache(keyword, items, cache)
         return items
 
-    def get_one_dish(self, dish_id: UUID, submenu_id: UUID, menu_id: UUID, db: Session, cache: Redis):
+    def get_one_dish(
+            self,
+            dish_id: UUID,
+            submenu_id: UUID,
+            menu_id: UUID,
+            db: Session,
+            cache: Redis
+    ) -> list[dict] | None:
         keyword = f'menu:{str(menu_id)}:submenu:{str(submenu_id)}:dish:{str(dish_id)}'
         data = cache_database.read_cache(keyword, cache)
         if data:
             return data
-        items = self.crud.read_item_by_id(dish_id, db)
+        items = self.crud.read_item_by_id(dish_id, submenu_id, db).first()
         cache_database.create_cache(keyword, items, cache)
         return items
 
-    def create_dish(self, submenu_id: UUID, menu_id: UUID, dish: schemas.DishCreate, db: Session, cache: Redis):
+    def create_dish(
+            self,
+            submenu_id: UUID,
+            menu_id: UUID,
+            dish: schemas.DishCreate,
+            db: Session,
+            cache: Redis
+    ) -> list[dict] | None:
         keywords = [
             'menus',
             f'menu:{str(menu_id)}',
@@ -38,10 +52,17 @@ class DishLoader:
             f'menu:{str(menu_id)}:submenu:{str(submenu_id)}:dishes',
         ]
         cache_database.delete_cache(keywords, cache=cache)
-        return self.crud.create_item(submenu_id, dish, db)
+        return self.crud.create_item(submenu_id, dish, db).first()
 
-    def update_dish(self, dish_id: UUID, submenu_id: UUID, menu_id: UUID, dish: schemas.DishCreate, db: Session,
-                    cache: Redis):
+    def update_dish(
+            self,
+            dish_id: UUID,
+            submenu_id: UUID,
+            menu_id: UUID,
+            dish: schemas.DishCreate,
+            db: Session,
+            cache: Redis
+    ) -> list[dict] | None:
         keywords = [
             'menus',
             f'menu:{str(menu_id)}',
@@ -53,7 +74,14 @@ class DishLoader:
         cache_database.delete_cache(keywords, cache=cache)
         return self.crud.update_item(dish_id, dish, db)
 
-    def delete_dish(self, dish_id: UUID, submenu_id: UUID, menu_id: UUID, db: Session, cache: Redis):
+    def delete_dish(
+            self,
+            dish_id: UUID,
+            submenu_id: UUID,
+            menu_id: UUID,
+            db: Session,
+            cache: Redis
+    ) -> list[dict] | None:
         keywords = [
             'menus',
             f'menu:{str(menu_id)}',

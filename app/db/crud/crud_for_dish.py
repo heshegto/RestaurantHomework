@@ -26,11 +26,11 @@ class DishCRUD(BaseCRUDModel):
     def read_all_items(self, submenu_id: UUID, db: Session) -> Query:
         return db.query(self.model).filter(self.model.id_submenu == submenu_id)
 
-    def read_item_by_id(self, dish_id: UUID, db: Session) -> Query:
-        return super()._get_item_by_id(dish_id, db)
+    def read_item_by_id(self, target_id: UUID, parent_id: UUID, db: Session) -> Query:
+        return self.read_all_items(parent_id, db).filter(self.model.id == target_id)
 
-    def update_item(self, dish_id: UUID, dish: schemas.DishCreate, db: Session) -> Query:
-        dish_to_update = super()._get_item_by_id(dish_id, db)
+    def update_item(self, target_id: UUID, dish: schemas.DishCreate, db: Session) -> list[dict] | None:
+        dish_to_update = super()._get_item_by_id(target_id, db)
         if dish_to_update:
             dish_to_update.title = dish.title
             dish_to_update.description = dish.description

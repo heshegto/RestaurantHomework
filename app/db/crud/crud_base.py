@@ -10,10 +10,10 @@ from ..models import BaseModel, Dish, Menu, SubMenu
 class BaseCRUDModel:
     model = BaseModel
 
-    def _get_item_by_id(self, target_id: UUID, db: Session) -> Query:
+    def _get_item_by_id(self, target_id: UUID, db: Session) -> Query | None:
         return db.query(self.model).filter(self.model.id == target_id).first()
 
-    def update_item(self, target_id: UUID, update_schema: schemas.BaseCreate, db: Session) -> Query:
+    def update_item(self, target_id: UUID, update_schema: schemas.BaseCreate, db: Session) -> list[dict] | None:
         item_to_update = self._get_item_by_id(target_id, db)
         if item_to_update:
             item_to_update.title = update_schema.title
@@ -22,7 +22,7 @@ class BaseCRUDModel:
             db.refresh(item_to_update)
         return item_to_update
 
-    def delete_item(self, target_id: UUID, db: Session) -> Query:
+    def delete_item(self, target_id: UUID, db: Session) -> list[dict] | None:
         item_to_delete = self._get_item_by_id(target_id, db)
         if item_to_delete:
             db.delete(item_to_delete)
