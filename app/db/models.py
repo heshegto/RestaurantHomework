@@ -21,7 +21,7 @@ class Menu(BaseModel):
 class SubMenu(BaseModel):
     __tablename__ = 'submenus'
 
-    id_menu = Column(UUID(as_uuid=True), ForeignKey('menus.id', ondelete='CASCADE'))
+    id_parent = Column(UUID(as_uuid=True), ForeignKey('menus.id', ondelete='CASCADE'))
 
     parent_menu = relationship('Menu', back_populates='child_menu')
     dish = relationship('Dish', back_populates='submenu', cascade='all, delete-orphan')
@@ -31,6 +31,6 @@ class Dish(BaseModel):
     __tablename__ = 'dishes'
 
     price = Column(String)
-    id_submenu = Column(UUID(as_uuid=True), ForeignKey('submenus.id'))
+    id_parent = Column(UUID(as_uuid=True), ForeignKey('submenus.id'))
 
     submenu = relationship('SubMenu', back_populates='dish')

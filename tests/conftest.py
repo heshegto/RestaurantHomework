@@ -1,4 +1,4 @@
-import os
+# import os
 from enum import Enum
 from uuid import UUID
 
@@ -14,13 +14,13 @@ from app.main import app
 
 from .data import dish_data, menu_data, submenu_data
 
-TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
-    os.getenv('POSTGRES_DB_USER', 'postgres'),
-    os.getenv('POSTGRES_DB_PASSWORD', ''),
-    os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
-    os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
-)
-# TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
+# TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
+#     os.getenv('POSTGRES_DB_USER', 'postgres'),
+#     os.getenv('POSTGRES_DB_PASSWORD', ''),
+#     os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
+#     os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
+# )
+TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
 
 
 engine_test = create_engine(TEST_DATABASE_URL)

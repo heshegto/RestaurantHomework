@@ -5,12 +5,13 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from ...db.cache_database import get_redis
+from ...db.crud import DishCRUD
 from ...db.database import get_db
-from ...db.db_loaders.db_loader_for_dish import DishLoader
+from ...db.db_loaders.db_loader_base import BaseLoader
 from ..schemas import Dish, DishCreate
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
-db_loader = DishLoader()
+db_loader = BaseLoader(DishCRUD())
 
 
 @router.get('', response_model=list[Dish], summary='Get list of dishes for a given submenu')
@@ -20,7 +21,7 @@ def read_dishes(
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> list[Dish]:
-    return db_loader.get_all_dishes(target_submenu_id, target_menu_id, db, cache)
+    return db_loader.get_all(db, cache, target_submenu_id, target_menu_id)
 
 
 @router.get('/{target_dish_id}', response_model=Dish, summary='Get a dish by it\'s id')
@@ -30,8 +31,8 @@ def read_dish_by_id(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish:
-    db_dish = db_loader.get_one_dish(target_dish_id, target_submenu_id, target_menu_id, db, cache)
+) -> Dish | list:
+    db_dish = db_loader.get_one(db, cache, target_dish_id, target_submenu_id, target_menu_id)
     if db_dish is None:
         raise HTTPException(status_code=404, detail='dish not found')
     return db_dish
@@ -45,7 +46,10 @@ def create_dish(
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish:
-    return db_loader.create_dish(target_submenu_id, target_menu_id, dish, db, cache)
+    db_dish = db_loader.create(db, cache, dish, target_submenu_id, target_menu_id)
+    if db_dish is None:
+        raise HTTPException(status_code=404, detail='dish create error')
+    return db_dish
 
 
 @router.patch('/{target_dish_id}', response_model=Dish, summary='Update a dish')
@@ -57,7 +61,10 @@ def update_dish(
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish:
-    return db_loader.update_dish(target_dish_id, target_submenu_id, target_menu_id, dish, db, cache)
+    db_dish = db_loader.update(db, cache, dish, target_dish_id, target_submenu_id, target_menu_id)
+    if db_dish is None:
+        raise HTTPException(status_code=404, detail='dish update error')
+    return db_dish
 
 
 @router.delete('/{target_dish_id}', response_model=Dish, summary='Delete a dish')
@@ -68,4 +75,7 @@ def delete_dish(
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish:
-    return db_loader.delete_dish(target_dish_id, target_submenu_id, target_menu_id, db, cache)
+    db_dish = db_loader.delete(db, cache, target_dish_id, target_submenu_id, target_menu_id)
+    if db_dish is None:
+        raise HTTPException(status_code=404, detail='dish delete error')
+    return db_dish
