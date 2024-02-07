@@ -2,12 +2,19 @@ from uuid import UUID
 
 from app.db.models import Dish
 
-from .conftest import FieldType, client, reverse
+from .conftest import client
 from .data import dish_data, menu_data, new_dish_data, submenu_data, updated_dish_data
+from .reverse import reverse
 
 
-def test_create_dish(setup_test_database, new_data=new_dish_data):
-    response = client.post(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']), json=new_data)
+def test_create_dish(setup_test_database, new_data=new_dish_data) -> None:
+    response = client.post(
+        reverse('create_dish').format(
+            target_menu_id=menu_data['id'],
+            target_submenu_id=submenu_data['id']
+        ),
+        json=new_data
+    )
     assert response.status_code == 201
 
     assert response.json()
@@ -23,8 +30,12 @@ def test_create_dish(setup_test_database, new_data=new_dish_data):
     assert data_from_db.description == new_data['description']
 
 
-def test_read_dish_by_id(setup_test_database):
-    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
+def test_read_dish_by_id(setup_test_database) -> None:
+    response = client.get(reverse('read_dish_by_id').format(
+        target_menu_id=menu_data['id'],
+        target_submenu_id=submenu_data['id'],
+        target_dish_id=dish_data['id']
+    ))
     assert response.status_code == 200
 
     assert response.json()
@@ -35,15 +46,22 @@ def test_read_dish_by_id(setup_test_database):
     assert data['description'] == dish_data['description']
 
 
-def test_read_dish_by_id_not_found():
-    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
+def test_read_dish_by_id_not_found() -> None:
+    response = client.get(reverse('read_dish_by_id').format(
+        target_menu_id=menu_data['id'],
+        target_submenu_id=submenu_data['id'],
+        target_dish_id=dish_data['id']
+    ))
     assert response.status_code == 404
     assert response.json()
     assert response.json()['detail'] == 'dish not found'
 
 
-def test_read_dishes(setup_test_database):
-    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']))
+def test_read_dishes(setup_test_database) -> None:
+    response = client.get(reverse('read_dishes').format(
+        target_menu_id=menu_data['id'],
+        target_submenu_id=submenu_data['id'],
+    ))
     assert response.status_code == 200
 
     assert response.json()
@@ -55,15 +73,22 @@ def test_read_dishes(setup_test_database):
     assert data[0]['description'] == dish_data['description']
 
 
-def test_read_dish_empty():
-    response = client.get(reverse(FieldType.DISH, menu_data['id'], submenu_data['id']))
+def test_read_dish_empty() -> None:
+    response = client.get(reverse('read_dishes').format(
+        target_menu_id=menu_data['id'],
+        target_submenu_id=submenu_data['id'],
+    ))
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_update_dish(setup_test_database, updated_data=updated_dish_data):
+def test_update_dish(setup_test_database, updated_data=updated_dish_data) -> None:
     response = client.patch(
-        reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']),
+        reverse('update_dish').format(
+            target_menu_id=menu_data['id'],
+            target_submenu_id=submenu_data['id'],
+            target_dish_id=dish_data['id']
+        ),
         json=updated_data
     )
     assert response.status_code == 200
@@ -82,10 +107,14 @@ def test_update_dish(setup_test_database, updated_data=updated_dish_data):
     assert data_from_db.description == updated_data['description']
 
 
-def test_delete_dish(setup_test_database):
+def test_delete_dish(setup_test_database) -> None:
     assert setup_test_database.query(Dish).filter(Dish.id == dish_data['id']).first() is not None
 
-    response = client.delete(reverse(FieldType.DISH, menu_data['id'], submenu_data['id'], dish_data['id']))
+    response = client.delete(reverse('update_dish').format(
+        target_menu_id=menu_data['id'],
+        target_submenu_id=submenu_data['id'],
+        target_dish_id=dish_data['id']
+    ))
     assert response.status_code == 200
 
     assert response.json()

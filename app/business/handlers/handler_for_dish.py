@@ -9,7 +9,7 @@ from ...db.crud import DishCRUD
 from ...db.database import get_db
 from ...db.db_loaders.db_loader_base import BaseLoader
 from ..schemas import Dish, DishCreate
-from .help_funcs import all_responses, is_dish_none
+from .services import all_responses, is_dish_none
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
 db_loader = BaseLoader(DishCRUD())

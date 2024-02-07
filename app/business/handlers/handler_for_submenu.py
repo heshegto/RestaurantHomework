@@ -9,7 +9,7 @@ from ...db.crud import SubMenuCRUD
 from ...db.database import get_db
 from ...db.db_loaders.db_loader_base import BaseLoader
 from ..schemas import SubMenu, SubMenuCreate, SubMenuRead
-from .help_funcs import all_responses, is_submenu_none
+from .services import all_responses, is_submenu_none
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus', tags=['Submenu'])
 db_loader = BaseLoader(SubMenuCRUD())

@@ -4,10 +4,11 @@ from app.db.models import Menu
 
 from .conftest import client
 from .data import menu_data, new_menu_data, updated_menu_data
+from .reverse import reverse
 
 
-def test_create_menu(setup_test_database, new_data=new_menu_data):
-    response = client.post('/api/v1/menus', json=new_data)
+def test_create_menu(setup_test_database, new_data=new_menu_data) -> None:
+    response = client.post(reverse('create_menu'), json=new_data)
     assert response.status_code == 201
 
     assert response.json()
@@ -23,8 +24,8 @@ def test_create_menu(setup_test_database, new_data=new_menu_data):
     assert data_from_db.description == new_data['description']
 
 
-def test_read_menu_by_id(setup_test_database):
-    response = client.get(f"/api/v1/menus/{menu_data['id']}")
+def test_read_menu_by_id(setup_test_database) -> None:
+    response = client.get(reverse('read_menu_by_id').format(target_menu_id=menu_data['id']))
     assert response.status_code == 200
 
     assert response.json()
@@ -35,15 +36,15 @@ def test_read_menu_by_id(setup_test_database):
     assert data['description'] == menu_data['description']
 
 
-def test_read_menu_by_id_not_found():
-    response = client.get(f"/api/v1/menus/{menu_data['id']}")
+def test_read_menu_by_id_not_found() -> None:
+    response = client.get(reverse('read_menu_by_id').format(target_menu_id=menu_data['id']))
     assert response.status_code == 404
     assert response.json()
     assert response.json()['detail'] == 'menu not found'
 
 
-def test_read_menus(setup_test_database):
-    response = client.get('/api/v1/menus')
+def test_read_menus(setup_test_database) -> None:
+    response = client.get(reverse('read_menus'))
     assert response.status_code == 200
 
     assert response.json()
@@ -56,13 +57,13 @@ def test_read_menus(setup_test_database):
 
 
 def test_read_menus_empty():
-    response = client.get('/api/v1/menus')
+    response = client.get(reverse('read_menus'))
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_update_menu(setup_test_database, updated_data=updated_menu_data):
-    response = client.patch(f"/api/v1/menus/{menu_data['id']}", json=updated_data)
+def test_update_menu(setup_test_database, updated_data=updated_menu_data) -> None:
+    response = client.patch(reverse('update_menu').format(target_menu_id=menu_data['id']), json=updated_data)
     assert response.status_code == 200
 
     assert response.json()
@@ -79,10 +80,10 @@ def test_update_menu(setup_test_database, updated_data=updated_menu_data):
     assert data_from_db.description == updated_data['description']
 
 
-def test_delete_menu(setup_test_database):
+def test_delete_menu(setup_test_database) -> None:
     assert setup_test_database.query(Menu).filter(Menu.id == menu_data['id']).first() is not None
 
-    response = client.delete(f"/api/v1/menus/{menu_data['id']}")
+    response = client.delete(reverse('delete_menu').format(target_menu_id=menu_data['id']))
     assert response.status_code == 200
 
     assert response.json()

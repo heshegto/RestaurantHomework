@@ -9,7 +9,7 @@ from ...db.crud import MenuCRUD
 from ...db.database import get_db
 from ...db.db_loaders.db_loader_base import BaseLoader
 from ..schemas import Menu, MenuCreate, MenuRead
-from .help_funcs import all_responses, is_menu_none
+from .services import all_responses, is_menu_none
 
 router = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
 db_loader = BaseLoader(MenuCRUD())
