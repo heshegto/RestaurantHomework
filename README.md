@@ -2,11 +2,23 @@
 ## How to start testing 3 homework:
 1) Clone repository:<br/>
 `git clone https://github.com/heshegto/RestaurantHomework.git`
-2) Change parameters in `.env` file
-3) Run app image build:<br/>
-`docker-compose -f dosker-compose.yml up --build -d`
-4) Run test image build:<br/>
-`docker-compose -f .dosker-compose-pytest.yml up --build -d`
+2) Install required packages:<br/>
+`pip install -r requirements.txt`
+3) Run `pre-commit` installation:<br/>
+`pre-commit install`
+4) Run `pre-commit` check:<br/>
+`pre-commit run --all-files`
+5) Change parameters in `.env` file if you need
+6) Run app image build:<br/>
+`docker-compose -f docker-compose.yml up --build -d`
+7) Run test image build:<br/>
+`docker-compose -f docker-compose-pytest.yml up --build -d`
+<br/><br/>
+* Task 6 implemented in tests/reverse.py
+* Changes in pre-commit-config.yaml:<br/>
+~ flake8 version changed 6.0.0 -> 6.1.0<br/>
+~ mypy added string 'additional_dependencies: [types-redis==4.6.0.3]'
+
 
 ## How to start testing 2 homework:
 1) Clone repository:<br/>
@@ -30,15 +42,3 @@
 6) Start API:<br/>
 `uvicorn app.main:app --reload`
 7) Start testing with Postman
-
-
-
- sudo service redis-server start
- sudo service redis-server stop
- redis-cli -h 127.0.0.1 -p 6379
-
-pre-commit install
-pre-commit run --all-files
-
-flake8 version changed 6.0.0 -> 6.1.0
-mypy added string 'additional_dependencies: [types-redis==4.6.0.3]'

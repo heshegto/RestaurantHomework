@@ -3,10 +3,10 @@ from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from redis import Redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.db.cache_database import get_redis
 from app.db.database import Base, get_db
 from app.db.models import Dish, Menu, SubMenu
 from app.main import app
@@ -21,6 +21,10 @@ TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
 )
 # TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
 
+TEST_REDIS_URL = 'redis://{name}:{port}'.format(
+    name=os.getenv('REDIS_NAME_FOR_TESTS', 'redis'),
+    port=os.getenv('REDIS_PORT_FOR_TESTS', '6379')
+)
 
 engine_test = create_engine(TEST_DATABASE_URL)
 TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine_test)
@@ -57,7 +61,7 @@ def db() -> Session:
 
 
 @pytest.fixture(autouse=False, scope='function')
-def setup_test_database(db) -> Session:
+def setup_test_database(db, red=get_redis()) -> Session:
     db_menu = Menu(
         id=menu_data['id'],
         title=menu_data['title'],
@@ -89,9 +93,8 @@ def setup_test_database(db) -> Session:
     db.refresh(db_dish)
 
     yield db
-    r = Redis(host='localhost', port=6379, decode_responses=True)
-    r.flushdb()
-    r.close()
+    red.flushdb()
+    red.close()
     db.query(Dish).delete()
     db.query(SubMenu).delete()
     db.query(Menu).delete()
