@@ -9,6 +9,7 @@ from ...db.crud import DishCRUD
 from ...db.database import get_db
 from ...db.db_loaders.db_loader_base import BaseLoader
 from ..schemas import Dish, DishCreate
+from .help_funcs import all_responses, is_dish_none
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
 db_loader = BaseLoader(DishCRUD())
@@ -20,25 +21,33 @@ def read_dishes(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> list[Dish]:
+) -> list[Dish] | list[dict[str, int]]:
     return db_loader.get_all(db, cache, target_submenu_id, target_menu_id)
 
 
-@router.get('/{target_dish_id}', response_model=Dish, summary='Get a dish by it\'s id')
+@router.get(
+    '/{target_dish_id}',
+    response_model=Dish,
+    summary='Get a dish by it\'s id',
+    responses={404: all_responses['dish'][404]}
+)
 def read_dish_by_id(
         target_dish_id: UUID,
         target_submenu_id: UUID,
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish | list:
-    db_dish = db_loader.get_one(db, cache, target_dish_id, target_submenu_id, target_menu_id)
-    if db_dish is None:
-        raise HTTPException(status_code=404, detail='dish not found')
-    return db_dish
+) -> Dish | list[dict[str, int]]:
+    return is_dish_none(db_loader.get_one(db, cache, target_dish_id, target_submenu_id, target_menu_id))
 
 
-@router.post('', response_model=Dish, status_code=201, summary='Create a new dish for a given submenu')
+@router.post(
+    '',
+    response_model=Dish,
+    status_code=201,
+    summary='Create a new dish for a given submenu',
+    responses={401: all_responses['dish'][401]}
+)
 def create_dish(
         target_submenu_id: UUID,
         target_menu_id: UUID,
@@ -48,11 +57,19 @@ def create_dish(
 ) -> Dish:
     db_dish = db_loader.create(db, cache, dish, target_submenu_id, target_menu_id)
     if db_dish is None:
-        raise HTTPException(status_code=404, detail='dish create error')
+        raise HTTPException(
+            status_code=401,
+            detail='Dish creation error'
+        )
     return db_dish
 
 
-@router.patch('/{target_dish_id}', response_model=Dish, summary='Update a dish')
+@router.patch(
+    '/{target_dish_id}',
+    response_model=Dish,
+    summary='Update a dish',
+    responses={404: all_responses['dish'][404]}
+)
 def update_dish(
         target_dish_id: UUID,
         target_submenu_id: UUID,
@@ -60,22 +77,21 @@ def update_dish(
         dish: DishCreate,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish:
-    db_dish = db_loader.update(db, cache, dish, target_dish_id, target_submenu_id, target_menu_id)
-    if db_dish is None:
-        raise HTTPException(status_code=404, detail='dish update error')
-    return db_dish
+) -> Dish | list[dict[str, int]]:
+    return is_dish_none(db_loader.update(db, cache, dish, target_dish_id, target_submenu_id, target_menu_id))
 
 
-@router.delete('/{target_dish_id}', response_model=Dish, summary='Delete a dish')
+@router.delete(
+    '/{target_dish_id}',
+    response_model=Dish,
+    summary='Delete a dish',
+    responses={404: all_responses['dish'][404]}
+)
 def delete_dish(
         target_dish_id: UUID,
         target_submenu_id: UUID,
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish:
-    db_dish = db_loader.delete(db, cache, target_dish_id, target_submenu_id, target_menu_id)
-    if db_dish is None:
-        raise HTTPException(status_code=404, detail='dish delete error')
-    return db_dish
+) -> Dish | list[dict[str, int]]:
+    return is_dish_none(db_loader.delete(db, cache, target_dish_id, target_submenu_id, target_menu_id))

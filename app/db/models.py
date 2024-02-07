@@ -9,7 +9,7 @@ from app.db.database import Base
 class BaseModel(Base):
     __abstract__ = True
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True, nullable=False)
-    title = Column(String)
+    title = Column(String, unique=True)
     description = Column(String, nullable=True)
 
 

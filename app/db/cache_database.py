@@ -13,11 +13,11 @@ def delete_cache(keywords: list[str], cache: Redis) -> None:
         cache.delete(keyword)
 
 
-def create_cache(keyword: str, db_data: list | Query, cache: Redis) -> None:
+def create_cache(keyword: str, db_data: list[dict[str, int]] | Query, cache: Redis) -> None:
     cache.set(keyword, pickle.dumps(db_data))
 
 
-def read_cache(keyword: str, cache: Redis) -> list | None:
+def read_cache(keyword: str, cache: Redis) -> list[dict[str, int]] | None:
     result = cache.get(keyword)
     if result is None:
         return None

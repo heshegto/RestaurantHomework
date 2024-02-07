@@ -3,7 +3,16 @@ from uuid import UUID
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from ...business import schemas
+from ...business.schemas import (
+    Dish,
+    DishCreate,
+    Menu,
+    MenuCreate,
+    MenuRead,
+    SubMenu,
+    SubMenuCreate,
+    SubMenuRead,
+)
 from .. import cache_database
 from ..crud import DishCRUD, MenuCRUD, SubMenuCRUD
 from .keywords import dish_keywords, menu_keywords, submenu_keywords
@@ -19,7 +28,7 @@ class BaseLoader:
             cache: Redis,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
-    ) -> list[schemas.MenuRead] | list[schemas.SubMenuRead] | list[schemas.Dish]:
+    ) -> list[MenuRead] | list[SubMenuRead] | list[Dish] | list[dict[str, int]]:
         keyword = self.__get_required_keywords(parent_id, grand_id)[-3]
         data = cache_database.read_cache(keyword, cache)
         if data:
@@ -35,7 +44,7 @@ class BaseLoader:
             target_id: UUID | None = None,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None
-    ) -> schemas.MenuRead | schemas.SubMenuRead | schemas.Dish | list | None:
+    ) -> MenuRead | SubMenuRead | Dish | list[dict[str, int]] | None:
         keyword = self.__get_required_keywords(target_id, parent_id, grand_id)[-2]
         data = cache_database.read_cache(keyword, cache)
         if data:
@@ -51,10 +60,10 @@ class BaseLoader:
             self,
             db: Session,
             cache: Redis,
-            schema: schemas.DishCreate | schemas.SubMenuCreate | schemas.MenuCreate,
+            schema: DishCreate | SubMenuCreate | MenuCreate,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
-    ) -> schemas.MenuRead | schemas.SubMenuRead | schemas.Dish | None:
+    ) -> Menu | SubMenu | Dish | None:
         keywords = self.__get_required_keywords(parent_id, grand_id)[:-2]
         cache_database.delete_cache(keywords, cache=cache)
         return self.crud.create_item(db, schema, parent_id)
@@ -63,11 +72,11 @@ class BaseLoader:
             self,
             db: Session,
             cache: Redis,
-            schema: schemas.DishCreate | schemas.SubMenuCreate | schemas.MenuCreate,
+            schema: DishCreate | SubMenuCreate | MenuCreate,
             target_id: UUID | None = None,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
-    ) -> schemas.MenuRead | schemas.SubMenuRead | schemas.Dish | None:
+    ) -> Menu | SubMenu | Dish | None:
         keywords = self.__get_required_keywords(target_id, parent_id, grand_id)[-3:-1]
         cache_database.delete_cache(keywords, cache=cache)
         return self.crud.update_item(db, schema, target_id)
@@ -79,7 +88,7 @@ class BaseLoader:
             target_id: UUID | None = None,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
-    ) -> schemas.MenuRead | schemas.SubMenuRead | schemas.Dish | None:
+    ) -> Menu | SubMenu | Dish | None:
         keywords = self.__get_required_keywords(target_id, parent_id, grand_id)
         cache_database.delete_cache(keywords, cache=cache)
         return self.crud.delete_item(db, target_id)
