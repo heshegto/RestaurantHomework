@@ -13,6 +13,8 @@
 `docker-compose -f docker-compose.yml up --build -d`
 7) Run test image build:<br/>
 `docker-compose -f docker-compose-pytest.yml up --build -d`
+8) Run tests:<br/>
+`docker-compose -f docker-compose-pytest.yml run tests`
 <br/><br/>
 * Task 6 implemented in tests/reverse.py
 * Changes in pre-commit-config.yaml:<br/>
