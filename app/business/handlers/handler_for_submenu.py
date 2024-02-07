@@ -20,7 +20,7 @@ def read_submenus(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> list[SubMenuRead] | list[dict[str, int]]:
+) -> list[SubMenuRead] | list[dict[str, str | int]]:
     return db_loader.get_all(db, cache, target_menu_id)
 
 
@@ -35,7 +35,7 @@ def read_submenu_by_id(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> SubMenuRead | list[dict[str, int]]:
+) -> SubMenuRead | list[dict[str, str | int]]:
     return is_submenu_none(db_loader.get_one(db, cache, target_submenu_id, target_menu_id))
 
 
@@ -73,7 +73,7 @@ def update_submenu(
         submenu: SubMenuCreate,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> SubMenu | list[dict[str, int]]:
+) -> SubMenu | list[dict[str, str | int]]:
     return is_submenu_none(db_loader.update(db, cache, submenu, target_submenu_id, target_menu_id))
 
 
@@ -88,5 +88,5 @@ def delete_submenu(
         target_menu_id: UUID, db:
         Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> SubMenu | list[dict[str, int]]:
+) -> SubMenu | list[dict[str, str | int]]:
     return is_submenu_none(db_loader.delete(db, cache, target_submenu_id, target_menu_id))

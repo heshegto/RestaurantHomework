@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from ..schemas import Dish, Menu, MenuRead, SubMenu, SubMenuRead
 
 
-def is_dish_none(db_dish: Dish | list[dict[str, int]] | None) -> Dish | list[dict[str, int]]:
+def is_dish_none(db_dish: Dish | list[dict[str, str | int]] | None) -> Dish | list[dict[str, str | int]]:
     if db_dish is None:
         raise HTTPException(
             status_code=404,
@@ -13,8 +13,8 @@ def is_dish_none(db_dish: Dish | list[dict[str, int]] | None) -> Dish | list[dic
 
 
 def is_submenu_none(
-        db_submenu: SubMenu | SubMenuRead | list[dict[str, int]] | None
-) -> SubMenu | SubMenuRead | list[dict[str, int]]:
+        db_submenu: SubMenu | SubMenuRead | list[dict[str, str | int]] | None
+) -> SubMenu | SubMenuRead | list[dict[str, str | int]]:
     if db_submenu is None:
         raise HTTPException(
             status_code=404,
@@ -23,7 +23,7 @@ def is_submenu_none(
     return db_submenu
 
 
-def is_menu_none(db_menu: Menu | MenuRead | list[dict[str, int]] | None) -> Menu | MenuRead | list[dict[str, int]]:
+def is_menu_none(db_menu: Menu | MenuRead | list[dict[str, str | int]] | None) -> Menu | MenuRead | list[dict[str, str | int]]:
     if db_menu is None:
         raise HTTPException(
             status_code=404,

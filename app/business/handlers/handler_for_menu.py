@@ -19,7 +19,7 @@ db_loader = BaseLoader(MenuCRUD())
 def read_menus(
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> list[MenuRead] | list[dict[str, int]]:
+) -> list[MenuRead] | list[dict[str, str | int]]:
     return db_loader.get_all(db, cache)
 
 
@@ -33,7 +33,7 @@ def read_menu_by_id(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> MenuRead | list[dict[str, int]]:
+) -> MenuRead | list[dict[str, str | int]]:
     return is_menu_none(db_loader.get_one(db, cache, target_menu_id))
 
 
@@ -69,7 +69,7 @@ def update_menu(
         menu: MenuCreate,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Menu | list[dict[str, int]]:
+) -> Menu | list[dict[str, str | int]]:
     return is_menu_none(db_loader.update(db, cache, menu, target_menu_id))
 
 
@@ -83,5 +83,5 @@ def delete_menu(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Menu | list[dict[str, int]]:
+) -> Menu | list[dict[str, str | int]]:
     return is_menu_none(db_loader.delete(db, cache, target_menu_id))

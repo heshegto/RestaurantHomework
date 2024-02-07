@@ -28,7 +28,7 @@ class BaseLoader:
             cache: Redis,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
-    ) -> list[MenuRead] | list[SubMenuRead] | list[Dish] | list[dict[str, int]]:
+    ) -> list[MenuRead] | list[SubMenuRead] | list[Dish] | list[dict[str, str | int]]:
         keyword = self.__get_required_keywords(parent_id, grand_id)[-3]
         data = cache_database.read_cache(keyword, cache)
         if data:
@@ -44,7 +44,7 @@ class BaseLoader:
             target_id: UUID | None = None,
             parent_id: UUID | None = None,
             grand_id: UUID | None = None
-    ) -> MenuRead | SubMenuRead | Dish | list[dict[str, int]] | None:
+    ) -> MenuRead | SubMenuRead | Dish | list[dict[str, str | int]] | None:
         keyword = self.__get_required_keywords(target_id, parent_id, grand_id)[-2]
         data = cache_database.read_cache(keyword, cache)
         if data:

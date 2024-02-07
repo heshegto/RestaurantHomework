@@ -21,7 +21,7 @@ def read_dishes(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> list[Dish] | list[dict[str, int]]:
+) -> list[Dish] | list[dict[str, str | int]]:
     return db_loader.get_all(db, cache, target_submenu_id, target_menu_id)
 
 
@@ -37,7 +37,7 @@ def read_dish_by_id(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish | list[dict[str, int]]:
+) -> Dish | list[dict[str, str | int]]:
     return is_dish_none(db_loader.get_one(db, cache, target_dish_id, target_submenu_id, target_menu_id))
 
 
@@ -77,7 +77,7 @@ def update_dish(
         dish: DishCreate,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish | list[dict[str, int]]:
+) -> Dish | list[dict[str, str | int]]:
     return is_dish_none(db_loader.update(db, cache, dish, target_dish_id, target_submenu_id, target_menu_id))
 
 
@@ -93,5 +93,5 @@ def delete_dish(
         target_menu_id: UUID,
         db: Session = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> Dish | list[dict[str, int]]:
+) -> Dish | list[dict[str, str | int]]:
     return is_dish_none(db_loader.delete(db, cache, target_dish_id, target_submenu_id, target_menu_id))
