@@ -7,7 +7,7 @@ from .data import menu_data, new_menu_data, updated_menu_data
 from .reverse import reverse
 
 
-def test_create_menu(setup_test_database, new_data=new_menu_data) -> None:
+def test_create_menu(setup_test_database, new_data: dict[str, str] = new_menu_data) -> None:
     response = client.post(reverse('create_menu'), json=new_data)
     assert response.status_code == 201
 
@@ -62,7 +62,7 @@ def test_read_menus_empty():
     assert response.json() == []
 
 
-def test_update_menu(setup_test_database, updated_data=updated_menu_data) -> None:
+def test_update_menu(setup_test_database, updated_data: dict[str, str] = updated_menu_data) -> None:
     response = client.patch(reverse('update_menu').format(target_menu_id=menu_data['id']), json=updated_data)
     assert response.status_code == 200
 

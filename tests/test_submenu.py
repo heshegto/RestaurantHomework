@@ -7,7 +7,7 @@ from .data import menu_data, new_submenu_data, submenu_data, updated_submenu_dat
 from .reverse import reverse
 
 
-def test_create_submenu(setup_test_database, new_data=new_submenu_data) -> None:
+def test_create_submenu(setup_test_database, new_data: dict[str, str] = new_submenu_data) -> None:
     response = client.post(reverse('create_submenu').format(target_menu_id=menu_data['id']), json=new_data)
     assert response.status_code == 201
 
@@ -68,7 +68,7 @@ def test_read_submenus_empty() -> None:
     assert response.json() == []
 
 
-def test_update_submenu(setup_test_database, updated_data=updated_submenu_data) -> None:
+def test_update_submenu(setup_test_database, updated_data: dict[str, str] = updated_submenu_data) -> None:
     response = client.patch(
         reverse('update_submenu').format(
             target_menu_id=menu_data['id'],

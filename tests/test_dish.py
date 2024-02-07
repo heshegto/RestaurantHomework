@@ -7,7 +7,7 @@ from .data import dish_data, menu_data, new_dish_data, submenu_data, updated_dis
 from .reverse import reverse
 
 
-def test_create_dish(setup_test_database, new_data=new_dish_data) -> None:
+def test_create_dish(setup_test_database, new_data: dict[str, str] = new_dish_data) -> None:
     response = client.post(
         reverse('create_dish').format(
             target_menu_id=menu_data['id'],
@@ -82,7 +82,7 @@ def test_read_dish_empty() -> None:
     assert response.json() == []
 
 
-def test_update_dish(setup_test_database, updated_data=updated_dish_data) -> None:
+def test_update_dish(setup_test_database, updated_data: dict[str, str] = updated_dish_data) -> None:
     response = client.patch(
         reverse('update_dish').format(
             target_menu_id=menu_data['id'],
