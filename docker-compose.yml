@@ -11,7 +11,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: bash -c 'uvicorn app.main:app --host 0.0.0.0 --port ${APP_HOST_PORT}'
+    command: bash -c 'uvicorn app.main:app --host ${APP_HOST} --port ${APP_HOST_PORT}'
     volumes:
       - ./app:/src/app
     ports:
@@ -39,11 +39,11 @@ services:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_DB_USER}" ]
 
   redis:
+    container_name: ${REDIS_NAME}
     image: redis:latest
-    container_name: redis
     restart: always
     ports:
-      - "6379:6379"
+      - ${REDIS_PORT}:${REDIS_PORT}
     env_file:
       - .env
     healthcheck:
