@@ -15,5 +15,5 @@ db_loader = DBOrCache(DishCRUD())
 async def read_everything(
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
-) -> list[dict[str, str | int]]:
+):
     return await db_loader.get_everything(db, cache)

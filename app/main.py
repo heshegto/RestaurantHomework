@@ -34,7 +34,6 @@ async def init_tables():
     red = get_redis()
     red.flushdb()
     async with engine.begin() as conn:
-        await conn.run_sync(models.Base.metadata.drop_all)
         await conn.run_sync(models.Base.metadata.create_all)
     synchronization.delay()
 

@@ -148,4 +148,3 @@ def del_old() -> None:
                         if dish['title'] not in dish_list_from_file:
                             dishurl = url3 + '/' + dish['id']
                             requests.delete(dishurl)
-push_new()
