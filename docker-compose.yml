@@ -1,25 +1,6 @@
 version: '3.8'
 
 services:
-  app:
-    container_name: ${APP_NAME}
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: bash -c 'uvicorn app.main:app --host ${APP_HOST} --port ${APP_HOST_PORT}'
-    volumes:
-      - ./app:/src/app
-    ports:
-      - ${APP_HOST_PORT}:${APP_HOST_PORT}
-    restart: always
-    env_file:
-      - .env
-
   db:
     container_name: ${POSTGRES_DB_CONTAINER_NAME}
     image: postgres:15.1-alpine
@@ -51,3 +32,51 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
+  app:
+    container_name: ${APP_NAME}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: bash -c 'uvicorn app.main:app --host ${APP_HOST} --port ${APP_HOST_PORT}'
+    volumes:
+      - ./app:/src/app
+    ports:
+      - ${APP_HOST_PORT}:${APP_HOST_PORT}
+    restart: always
+    env_file:
+      - .env
+
+  rabbitmq:
+    container_name: ${RABBITMQ_CONTAINER_NAME}
+    image: rabbitmq:latest
+    hostname: ${RABBITMQ_HOST}
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - ${RABBITMQ_PORT}:${RABBITMQ_PORT}
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 30s
+      retries: 5
+
+  celery:
+    container_name: ${CELERY_NAME}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: always
+    command: [ "celery", "--app=src.app.background_tasks.tasks:synchronization", "worker", "-l", "INFO" ]
+    depends_on:
+      - app

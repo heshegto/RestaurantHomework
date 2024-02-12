@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.db.models import Dish
+from app.databases.models import Dish
 
 from .conftest import client
 from .data import dish_data, menu_data, new_dish_data, submenu_data, updated_dish_data

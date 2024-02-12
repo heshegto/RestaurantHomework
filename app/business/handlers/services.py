@@ -23,7 +23,9 @@ def is_submenu_none(
     return db_submenu
 
 
-def is_menu_none(db_menu: Menu | MenuRead | list[dict[str, str | int]] | None) -> Menu | MenuRead | list[dict[str, str | int]]:
+def is_menu_none(
+        db_menu: Menu | MenuRead | list[dict[str, str | int]] | None
+) -> Menu | MenuRead | list[dict[str, str | int]]:
     if db_menu is None:
         raise HTTPException(
             status_code=404,

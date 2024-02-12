@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.db.models import SubMenu
+from app.databases.models import SubMenu
 
 from .conftest import client
 from .data import menu_data, new_submenu_data, submenu_data, updated_submenu_data

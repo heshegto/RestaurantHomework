@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 
 from .business.handlers import dish_router, menu_router, submenu_router
-from .db import models
-from .db.database import engine
+from .databases import models
+from .databases.db.database import engine
+from .databases.cash.cache import get_redis
+from .background_tasks.tasks import synchronization
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title='Restaurant API',
@@ -25,6 +27,17 @@ app = FastAPI(
         },
     ]
 )
+
+
+@app.on_event("startup")
+async def init_tables():
+    red = get_redis()
+    red.flushdb()
+    async with engine.begin() as conn:
+        await conn.run_sync(models.Base.metadata.drop_all)
+        await conn.run_sync(models.Base.metadata.create_all)
+    synchronization.delay()
+
 
 app.include_router(menu_router)
 app.include_router(submenu_router)

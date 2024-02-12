@@ -6,20 +6,20 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.cache_database import get_redis
-from app.db.database import Base, get_db
-from app.db.models import Dish, Menu, SubMenu
+from app.databases.cash.cache import get_redis
+from app.databases.db.database import Base, get_db
+from app.databases.models import Dish, Menu, SubMenu
 from app.main import app
 
 from .data import dish_data, menu_data, submenu_data
 
-TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
-    os.getenv('POSTGRES_DB_USER', 'postgres'),
-    os.getenv('POSTGRES_DB_PASSWORD', ''),
-    os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
-    os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
-)
-# TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
+# TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
+#     os.getenv('POSTGRES_DB_USER', 'postgres'),
+#     os.getenv('POSTGRES_DB_PASSWORD', ''),
+#     os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
+#     os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
+# )
+TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
 
 TEST_REDIS_URL = 'redis://{name}:{port}'.format(
     name=os.getenv('REDIS_NAME_FOR_TESTS', 'redis'),

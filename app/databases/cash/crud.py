@@ -1,16 +1,7 @@
-import os
 import pickle
 
 from redis import Redis
 from sqlalchemy.orm.query import Query
-
-
-def get_redis() -> Redis | None:
-    # return Redis(host='localhost', port='6379', decode_responses=False)
-    return Redis.from_url('redis://{name}:{port}'.format(
-        name=os.getenv('REDIS_NAME', 'redis'),
-        port=os.getenv('REDIS_PORT', '6379')
-    ), decode_responses=False)
 
 
 def delete_cache(keywords: list[str], cache: Redis) -> None:
