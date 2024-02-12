@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from .business.handlers import dish_router, menu_router, submenu_router
+from .business.handlers import dish_router, menu_router, submenu_router, all_router
 from .databases import models
 from .databases.db.database import engine
 from .databases.cash.cache import get_redis
@@ -42,3 +42,4 @@ async def init_tables():
 app.include_router(menu_router)
 app.include_router(submenu_router)
 app.include_router(dish_router)
+app.include_router(all_router)

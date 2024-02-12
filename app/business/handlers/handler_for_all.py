@@ -10,6 +10,7 @@ from app.databases.db_cache_switch import DBOrCache
 router = APIRouter(prefix='/api/v1/everything', tags=['Everything'])
 db_loader = DBOrCache(DishCRUD())
 
+
 @router.get('', summary='Get everything')
 async def read_everything(
         db: AsyncSession = Depends(get_db),

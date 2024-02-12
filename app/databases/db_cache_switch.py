@@ -20,7 +20,7 @@ from app.business.schemas import (
 )
 from .cash import crud as cache_crud
 from .cash.cache_keys import CacheKeys
-from .db.crud import DishCRUD, MenuCRUD, SubMenuCRUD
+from .db.crud import DishCRUD, MenuCRUD, SubMenuCRUD, read_everything
 
 
 class DBOrCache:
@@ -107,6 +107,6 @@ class DBOrCache:
         data = cache_crud.read_cache(keyword, cache)
         if data:
             return data
-        items = await self.db_crud.read_all_items(db, parent_id)
+        items = await read_everything(db)
         cache_crud.create_cache(keyword, items, cache)
         return items
