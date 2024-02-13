@@ -3,7 +3,7 @@ from app.databases.db.crud import DishCRUD, MenuCRUD, SubMenuCRUD
 
 
 class CacheKeys:
-    def __init__(self, db_crud_type: MenuCRUD | SubMenuCRUD | DishCRUD):
+    def __init__(self, db_crud_type: MenuCRUD | SubMenuCRUD | DishCRUD) -> None:
         menu_keys = [
             'menus',
             'menu:{menu_id}',

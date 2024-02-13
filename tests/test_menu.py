@@ -12,7 +12,11 @@ from .conftest import async_session_maker
 
 
 @pytest.mark.asyncio
-async def test_create_menu(setup_test_database, ac: AsyncGenerator[AsyncClient, None], new_data: dict[str, str] = new_menu_data) -> None:
+async def test_create_menu(
+        setup_test_database,
+        ac: AsyncGenerator[AsyncClient, None],
+        new_data: dict[str, str] = new_menu_data
+) -> None:
     response = await ac.post(reverse('create_menu'), json=new_data)
     assert response.status_code == 201
 

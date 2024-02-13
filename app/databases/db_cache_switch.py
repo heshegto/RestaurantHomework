@@ -7,7 +7,6 @@ from fastapi import Depends
 from .db.database import get_db
 from .cache.cache import get_redis
 
-
 from app.business.schemas import (
     Dish,
     DishCreate,
@@ -24,7 +23,7 @@ from .db.crud import DishCRUD, MenuCRUD, SubMenuCRUD, read_everything
 
 
 class DBOrCache:
-    def __init__(self, db_crud_type: MenuCRUD | SubMenuCRUD | DishCRUD):
+    def __init__(self, db_crud_type: MenuCRUD | SubMenuCRUD | DishCRUD) -> None:
         self.db_crud = db_crud_type
         self.cache_keys = CacheKeys(db_crud_type)
 

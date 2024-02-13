@@ -64,17 +64,18 @@ def get_list_of_titles_and_ids(item_list: list[dict]) -> dict:
     return result
 
 
-
 def creat_dishes(submenu: dict, menu_id: str, submenu_id: str) -> None:
     url = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes'
     for dish in submenu['dishes']:
-        requests.post(url, json={'title': dish['title'], 'description': dish['description'], 'price': f'{round(float(dish['price']), 2):.2f}'})
+        requests.post(url, json={'title': dish['title'], 'description': dish['description'],
+                                 'price': f'{round(float(dish['price']), 2):.2f}'})
 
 
 def creat_submenus(menu: dict, menu_id: str) -> None:
     url = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus'
     for submenu in menu['submenus']:
-        submenu_id = requests.post(url, json={'title': submenu['title'], 'description': submenu['description']}).json()['id']
+        submenu_id = requests.post(url, json={'title': submenu['title'], 'description': submenu['description']}).json()[
+            'id']
         creat_dishes(submenu, menu_id, submenu_id)
 
 
@@ -83,7 +84,8 @@ def push_new() -> None:
     menus_from_base = requests.get(url).json()
     for menu_item in get_base_from_file():
         if menu_item['title'] not in get_list_of_titles_and_ids(menus_from_base):
-            menu_id = requests.post(url, json={'title': menu_item['title'], 'description': menu_item['description']}).json()['id']
+            menu_id = \
+            requests.post(url, json={'title': menu_item['title'], 'description': menu_item['description']}).json()['id']
             creat_submenus(menu_item, menu_id)
         else:
             for submenu_item in menu_item['submenus']:
@@ -91,7 +93,8 @@ def push_new() -> None:
                 suburl = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus'
                 submenus_from_base = requests.get(suburl).json()
                 if submenu_item['title'] not in get_list_of_titles_and_ids(submenus_from_base):
-                    submenu_id = requests.post(suburl, json={'title': submenu_item['title'], 'description': submenu_item['description']}).json()['id']
+                    submenu_id = requests.post(suburl, json={'title': submenu_item['title'],
+                                                             'description': submenu_item['description']}).json()['id']
                     creat_dishes(submenu_item, menu_id, submenu_id)
                 else:
                     for dish_item in submenu_item['dishes']:
@@ -99,7 +102,9 @@ def push_new() -> None:
                         dishurl = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes'
                         dishes_from_base = requests.get(suburl).json()
                         if dish_item['title'] not in get_list_of_titles_and_ids(dishes_from_base):
-                            requests.post(dishurl, json={'title': dish_item['title'], 'description': dish_item['description'], 'price': f'{round(float(dish_item['price']), 2):.2f}'})
+                            requests.post(dishurl,
+                                          json={'title': dish_item['title'], 'description': dish_item['description'],
+                                                'price': f'{round(float(dish_item['price']), 2):.2f}'})
 
 
 def find_submenus_in_menu(target_menus: list[dict], title: str) -> list:
@@ -143,7 +148,8 @@ def del_old() -> None:
                     url3 = f'http://127.0.0.1:8000/api/v1/menus/{menu["id"]}/submenus/{submenu["id"]}/dishes'
                     dish_from_base = requests.get(url3).json()
                     dish_list_from_file = get_list_of_titles(
-                        find_dishes_in_submenu(find_submenus_in_menu(get_base_from_file(), menu['title']), submenu['title']))
+                        find_dishes_in_submenu(find_submenus_in_menu(get_base_from_file(), menu['title']),
+                                               submenu['title']))
                     for dish in dish_from_base:
                         if dish['title'] not in dish_list_from_file:
                             dishurl = url3 + '/' + dish['id']

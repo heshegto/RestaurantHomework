@@ -8,5 +8,3 @@ def get_redis() -> Redis | None:
         name=os.getenv('REDIS_NAME', 'localhost'),
         port=os.getenv('REDIS_PORT', '6379')
     ), decode_responses=False)
-
-

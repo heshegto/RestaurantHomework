@@ -2,6 +2,7 @@ import os
 import pytest_asyncio
 from typing import AsyncGenerator
 from httpx import AsyncClient
+from redis import Redis
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -69,7 +70,7 @@ async def ac() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest_asyncio.fixture(autouse=False, scope='function')
-async def setup_test_database(red=get_redis()):
+async def setup_test_database(red: Redis = get_redis()) -> None:
     query1 = insert(Menu).values(
         id=menu_data['id'],
         title=menu_data['title'],

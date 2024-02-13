@@ -12,8 +12,8 @@ def invalidation_on_creation(
         cache: Redis = Depends(get_redis),
         parent_id: UUID | None = None,
         grand_id: UUID | None = None,
-):
-    keywords = get_keys_for_item_type(parent_id, grand_id).get_required_keys(parent_id, grand_id)[:-2]+['everything']
+) -> None:
+    keywords = get_keys_for_item_type(parent_id, grand_id).get_required_keys(parent_id, grand_id)[:-2] + ['everything']
     cache_crud.delete_cache(keywords, cache=cache)
 
 
@@ -22,13 +22,12 @@ def invalidation_on_update(
         target_id: UUID | None = None,
         parent_id: UUID | None = None,
         grand_id: UUID | None = None,
-):
-
+) -> None:
     keywords = get_keys_for_item_type(parent_id, grand_id).get_required_keys(
         target_id,
         parent_id,
         grand_id
-    )[-3:-1]+['everything']
+    )[-3:-1] + ['everything']
     cache_crud.delete_cache(keywords, cache=cache)
 
 
@@ -37,16 +36,16 @@ def invalidation_on_delete(
         target_id: UUID | None = None,
         parent_id: UUID | None = None,
         grand_id: UUID | None = None,
-):
+) -> None:
     keywords = get_keys_for_item_type(parent_id, grand_id).get_required_keys(
         target_id,
         parent_id,
         grand_id
-    )+['everything']
+    ) + ['everything']
     cache_crud.delete_cache(keywords, cache=cache)
 
 
-def get_keys_for_item_type(parent_id: UUID | None = None, grand_id: UUID | None = None):
+def get_keys_for_item_type(parent_id: UUID | None = None, grand_id: UUID | None = None) -> CacheKeys:
     if grand_id:
         return CacheKeys(DishCRUD())
     elif parent_id:

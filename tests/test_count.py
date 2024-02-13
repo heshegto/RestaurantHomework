@@ -6,7 +6,6 @@ from httpx import AsyncClient
 
 from .reverse import reverse
 
-
 menu_id: UUID
 submenu_id: UUID
 dish_id_1: UUID
