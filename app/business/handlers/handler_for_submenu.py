@@ -1,15 +1,16 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.databases.cash.cache import get_redis
+from app.databases.cache.cache import get_redis
 from app.databases.db.crud import SubMenuCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache
 from ..schemas import SubMenu, SubMenuCreate, SubMenuRead
 from .services import all_responses, is_submenu_none
+from app.databases.cache import cache_invalidation
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus', tags=['Submenu'])
 db_loader = DBOrCache(SubMenuCRUD())
@@ -47,12 +48,14 @@ async def read_submenu_by_id(
     responses={401: all_responses['submenu'][401]}
 )
 async def create_submenu(
+        background_tasks: BackgroundTasks,
         target_menu_id: UUID,
         submenu: SubMenuCreate,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> SubMenu:
-    db_submenu = await db_loader.create(db, cache, submenu, target_menu_id)
+    background_tasks.add_task(cache_invalidation.invalidation_on_creation, cache, target_menu_id, None)
+    db_submenu = await db_loader.create(db, submenu, target_menu_id)
     if db_submenu is None:
         raise HTTPException(
             status_code=401,
@@ -68,13 +71,18 @@ async def create_submenu(
     responses={404: all_responses['submenu'][404]}
 )
 async def update_submenu(
+        background_tasks: BackgroundTasks,
         target_submenu_id: UUID,
         target_menu_id: UUID,
         submenu: SubMenuCreate,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> SubMenu | list[dict[str, str | int]]:
-    return is_submenu_none(await db_loader.update(db, cache, submenu, target_submenu_id, target_menu_id))
+    background_tasks.add_task(
+        cache_invalidation.invalidation_on_update,
+        cache, target_submenu_id, target_menu_id, None
+    )
+    return is_submenu_none(await db_loader.update(db, submenu, target_submenu_id))
 
 
 @router.delete(
@@ -84,9 +92,14 @@ async def update_submenu(
     responses={404: all_responses['submenu'][404]}
 )
 async def delete_submenu(
+        background_tasks: BackgroundTasks,
         target_submenu_id: UUID,
         target_menu_id: UUID, db:
         AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> SubMenu | list[dict[str, str | int]]:
-    return is_submenu_none(await db_loader.delete(db, cache, target_submenu_id, target_menu_id))
+    background_tasks.add_task(
+        cache_invalidation.invalidation_on_delete,
+        cache, target_submenu_id, target_menu_id, None
+    )
+    return is_submenu_none(await db_loader.delete(db, target_submenu_id))

@@ -1,15 +1,16 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.databases.cash.cache import get_redis
+from app.databases.cache.cache import get_redis
 from app.databases.db.crud import MenuCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache
 from ..schemas import Menu, MenuCreate, MenuRead
 from .services import all_responses, is_menu_none
+from app.databases.cache import cache_invalidation
 
 router = APIRouter(prefix='/api/v1/menus', tags=['Menu'])
 db_loader = DBOrCache(MenuCRUD())
@@ -45,11 +46,13 @@ async def read_menu_by_id(
     responses={401: all_responses['menu'][401]}
 )
 async def create_menu(
+        background_tasks: BackgroundTasks,
         menu: MenuCreate,
         db: AsyncSession = Depends(get_db),
-        cache: Redis = Depends(get_redis)
+        cache: Redis = Depends(get_redis),
 ) -> Menu:
-    db_menu = await db_loader.create(db, cache, menu)
+    background_tasks.add_task(cache_invalidation.invalidation_on_creation, cache, None, None)
+    db_menu = await db_loader.create(db, menu)
     if db_menu is None:
         raise HTTPException(
             status_code=401,
@@ -65,12 +68,14 @@ async def create_menu(
     responses={404: all_responses['menu'][404]}
 )
 async def update_menu(
+        background_tasks: BackgroundTasks,
         target_menu_id: UUID,
         menu: MenuCreate,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Menu | list[dict[str, str | int]]:
-    return is_menu_none(await db_loader.update(db, cache, menu, target_menu_id))
+    background_tasks.add_task(cache_invalidation.invalidation_on_update, cache, target_menu_id, None, None)
+    return is_menu_none(await db_loader.update(db, menu, target_menu_id))
 
 
 @router.delete(
@@ -80,8 +85,10 @@ async def update_menu(
     responses={404: all_responses['menu'][404]}
 )
 async def delete_menu(
+        background_tasks: BackgroundTasks,
         target_menu_id: UUID,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Menu | list[dict[str, str | int]]:
-    return is_menu_none(await db_loader.delete(db, cache, target_menu_id))
+    background_tasks.add_task(cache_invalidation.invalidation_on_delete, cache, target_menu_id, None, None)
+    return is_menu_none(await db_loader.delete(db, target_menu_id))

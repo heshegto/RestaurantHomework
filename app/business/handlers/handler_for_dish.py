@@ -1,15 +1,16 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.databases.cash.cache import get_redis
+from app.databases.cache.cache import get_redis
 from app.databases.db.crud import DishCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache
 from ..schemas import Dish, DishCreate
 from .services import all_responses, is_dish_none
+from app.databases.cache import cache_invalidation
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
 db_loader = DBOrCache(DishCRUD())
@@ -49,13 +50,18 @@ async def read_dish_by_id(
     responses={401: all_responses['dish'][401]}
 )
 async def create_dish(
+        background_tasks: BackgroundTasks,
         target_submenu_id: UUID,
         target_menu_id: UUID,
         dish: DishCreate,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish:
-    db_dish = await db_loader.create(db, cache, dish, target_submenu_id, target_menu_id)
+    background_tasks.add_task(
+        cache_invalidation.invalidation_on_creation,
+        cache, target_submenu_id, target_menu_id
+    )
+    db_dish = await db_loader.create(db, dish, target_submenu_id)
     if db_dish is None:
         raise HTTPException(
             status_code=401,
@@ -71,6 +77,7 @@ async def create_dish(
     responses={404: all_responses['dish'][404]}
 )
 async def update_dish(
+        background_tasks: BackgroundTasks,
         target_dish_id: UUID,
         target_submenu_id: UUID,
         target_menu_id: UUID,
@@ -78,7 +85,11 @@ async def update_dish(
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish | list[dict[str, str | int]]:
-    return is_dish_none(await db_loader.update(db, cache, dish, target_dish_id, target_submenu_id, target_menu_id))
+    background_tasks.add_task(
+        cache_invalidation.invalidation_on_update,
+        cache, target_dish_id, target_submenu_id, target_menu_id
+    )
+    return is_dish_none(await db_loader.update(db, dish, target_dish_id))
 
 
 @router.delete(
@@ -88,10 +99,15 @@ async def update_dish(
     responses={404: all_responses['dish'][404]}
 )
 async def delete_dish(
+        background_tasks: BackgroundTasks,
         target_dish_id: UUID,
         target_submenu_id: UUID,
         target_menu_id: UUID,
         db: AsyncSession = Depends(get_db),
         cache: Redis = Depends(get_redis)
 ) -> Dish | list[dict[str, str | int]]:
-    return is_dish_none(await db_loader.delete(db, cache, target_dish_id, target_submenu_id, target_menu_id))
+    background_tasks.add_task(
+        cache_invalidation.invalidation_on_delete,
+        cache, target_dish_id, target_submenu_id, target_menu_id
+    )
+    return is_dish_none(await db_loader.delete(db, target_dish_id))

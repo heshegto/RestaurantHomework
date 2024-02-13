@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.databases.cash.cache import get_redis
+from app.databases.cache.cache import get_redis
 from app.databases.db.crud import DishCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache

@@ -13,7 +13,7 @@ from typing import Generator
 
 import asyncio
 
-from app.databases.cash.cache import get_redis
+from app.databases.cache.cache import get_redis
 from app.databases.db.database import Base
 from app.databases.models import Dish, Menu, SubMenu
 

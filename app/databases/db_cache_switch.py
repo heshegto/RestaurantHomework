@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
 from fastapi import Depends
 from .db.database import get_db
-from .cash.cache import get_redis
+from .cache.cache import get_redis
 
 
 from app.business.schemas import (
@@ -18,8 +18,8 @@ from app.business.schemas import (
     SubMenuCreate,
     SubMenuRead,
 )
-from .cash import crud as cache_crud
-from .cash.cache_keys import CacheKeys
+from .cache import crud as cache_crud
+from .cache.cache_keys import CacheKeys
 from .db.crud import DishCRUD, MenuCRUD, SubMenuCRUD, read_everything
 
 
@@ -62,46 +62,30 @@ class DBOrCache:
     async def create(
             self,
             db: AsyncSession = Depends(get_db),
-            cache: Redis = Depends(get_redis),
             schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
             parent_id: UUID | None = None,
-            grand_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
-        keywords = self.cache_keys.get_required_keys(parent_id, grand_id)[:-2]
-        cache_crud.delete_cache(keywords, cache=cache)
         return await self.db_crud.create_item(db, schema, parent_id)
 
     async def update(
             self,
             db: AsyncSession = Depends(get_db),
-            cache: Redis = Depends(get_redis),
             schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
             target_id: UUID | None = None,
-            parent_id: UUID | None = None,
-            grand_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
-        keywords = self.cache_keys.get_required_keys(target_id, parent_id, grand_id)[-3:-1]
-        cache_crud.delete_cache(keywords, cache=cache)
         return await self.db_crud.update_item(db, schema, target_id)
 
     async def delete(
             self,
             db: AsyncSession = Depends(get_db),
-            cache: Redis = Depends(get_redis),
             target_id: UUID | None = None,
-            parent_id: UUID | None = None,
-            grand_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
-        keywords = self.cache_keys.get_required_keys(target_id, parent_id, grand_id)
-        cache_crud.delete_cache(keywords, cache=cache)
         return await self.db_crud.delete_item(db, target_id)
 
+    @staticmethod
     async def get_everything(
-            self,
             db: AsyncSession = Depends(get_db),
             cache: Redis = Depends(get_redis),
-            parent_id: UUID | None = None,
-            grand_id: UUID | None = None,
     ) -> list[MenuRead] | list[SubMenuRead] | list[Dish] | list[dict[str, str | int]] | Query:
         keyword = 'everything'
         data = cache_crud.read_cache(keyword, cache)

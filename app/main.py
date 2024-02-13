@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from .business.handlers import dish_router, menu_router, submenu_router, all_router
 from .databases import models
 from .databases.db.database import engine
-from .databases.cash.cache import get_redis
+from .databases.cache.cache import get_redis
 from .background_tasks.tasks import synchronization
 
 app = FastAPI(
