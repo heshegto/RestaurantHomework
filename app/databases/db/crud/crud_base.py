@@ -17,7 +17,7 @@ class BaseCRUDModel:
         return result
 
     async def read_all_items(self, db: AsyncSession, parent_id: UUID | None) -> Query:
-        query = self.get_all_items_query().where(self.model.id_parent == parent_id)
+        query = select(self.model).where(self.model.id_parent == parent_id)
         result = (await db.execute(query)).all()
         return result
 

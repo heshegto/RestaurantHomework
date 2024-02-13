@@ -21,9 +21,8 @@ app = Celery('tasks', broker=SQLALCHEMY_DATABASE_URL)
 )
 async def synchronization():
     try:
-        if check_for_updates():
-            push_new()
-            del_old()
+        push_new()
+        del_old()
 
     except Exception as error:
         logging.error(error)

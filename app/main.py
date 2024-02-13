@@ -6,8 +6,6 @@ from .databases.db.database import engine
 from .databases.cash.cache import get_redis
 from .background_tasks.tasks import synchronization
 
-# models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title='Restaurant API',
     description='App for restaurant',

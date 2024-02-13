@@ -1,101 +1,108 @@
 import os
+import pytest_asyncio
+from typing import AsyncGenerator
+from httpx import AsyncClient
+
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import insert, delete
+
+from app.databases.db.database import get_db
+from app.main import app
 from typing import Generator
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+import asyncio
 
 from app.databases.cash.cache import get_redis
-from app.databases.db.database import Base, get_db
+from app.databases.db.database import Base
 from app.databases.models import Dish, Menu, SubMenu
-from app.main import app
 
 from .data import dish_data, menu_data, submenu_data
+from sqlalchemy.pool import NullPool
 
-# TEST_DATABASE_URL = 'postgresql://{}:{}@{}/{}'.format(
-#     os.getenv('POSTGRES_DB_USER', 'postgres'),
-#     os.getenv('POSTGRES_DB_PASSWORD', ''),
-#     os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'postgres'),
-#     os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
-# )
-TEST_DATABASE_URL = 'postgresql://postgres:5875@localhost:5432/postgres'
+TEST_DATABASE_URL = 'postgresql+asyncpg://{}:{}@{}/{}'.format(
+    os.getenv('POSTGRES_DB_USER', 'postgres'),
+    os.getenv('POSTGRES_DB_PASSWORD', '5875'),
+    os.getenv('POSTGRES_DB_CONTAINER_NAME_FOR_TESTS', 'localhost:5432'),
+    os.getenv('POSTGRES_DB_FOR_TESTS', 'postgres')
+)
 
 TEST_REDIS_URL = 'redis://{name}:{port}'.format(
     name=os.getenv('REDIS_NAME_FOR_TESTS', 'redis'),
     port=os.getenv('REDIS_PORT_FOR_TESTS', '6379')
 )
 
-engine_test = create_engine(TEST_DATABASE_URL)
-TestSession = sessionmaker(autocommit=False, autoflush=False, bind=engine_test)
+pytest_plugins = ('pytest_asyncio',)
+engine_test = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
+async_session_maker = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
+Base.metadata.bind = engine_test
 
 
-def override_get_db() -> Session:
-    db = TestSession()
-    try:
-        yield db
-    finally:
-        db.close()
+async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_maker() as session:
+        yield session
 
 
-app.dependency_overrides[get_db] = override_get_db
-client = TestClient(app)
+app.dependency_overrides[get_db] = override_get_session
 
 
-@pytest.fixture(autouse=True, scope='session')
-def create_test_database() -> Generator:
-    Base.metadata.create_all(bind=engine_test)
+@pytest_asyncio.fixture(scope='session')
+def event_loop(request):
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture(autouse=True, scope='session')
+async def create_test_database() -> Generator:
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    Base.metadata.drop_all(bind=engine_test)
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope='module')
-def db() -> Session:
-    """I don't know for what is it, but without it nothing works"""
-    connection = engine_test.connect()
-    session = TestSession(bind=connection)
-
-    yield session
-
-    session.close()
+@pytest_asyncio.fixture(scope='session')
+async def ac() -> AsyncGenerator[AsyncClient, None]:
+    async with AsyncClient(app=app, base_url='http://127.0.0.1:8000') as ac:
+        yield ac
 
 
-@pytest.fixture(autouse=False, scope='function')
-def setup_test_database(db, red=get_redis()) -> Session:
-    db_menu = Menu(
+@pytest_asyncio.fixture(autouse=False, scope='function')
+async def setup_test_database(red=get_redis()):
+    query1 = insert(Menu).values(
         id=menu_data['id'],
         title=menu_data['title'],
         description=menu_data['description']
     )
-    db.add(db_menu)
-    db.commit()
-    db.refresh(db_menu)
 
-    db_submenu = SubMenu(
+    query2 = insert(SubMenu).values(
         id=submenu_data['id'],
         title=submenu_data['title'],
         description=submenu_data['description'],
-        id_parent=db_menu.id
+        id_parent=menu_data['id']
     )
-    db.add(db_submenu)
-    db.commit()
-    db.refresh(db_submenu)
 
-    db_dish = Dish(
+    query3 = insert(Dish).values(
         id=dish_data['id'],
         title=dish_data['title'],
         description=dish_data['description'],
         price=dish_data['price'],
-        id_parent=db_submenu.id
+        id_parent=submenu_data['id']
     )
-    db.add(db_dish)
-    db.commit()
-    db.refresh(db_dish)
+    async with async_session_maker() as session:
+        await session.execute(query1)
+        await session.execute(query2)
+        await session.execute(query3)
+        await session.commit()
 
-    yield db
+    yield
+
     red.flushdb()
     red.close()
-    db.query(Dish).delete()
-    db.query(SubMenu).delete()
-    db.query(Menu).delete()
-    db.commit()
+
+    async with async_session_maker() as session:
+        await session.execute(delete(Dish))
+        await session.execute(delete(SubMenu))
+        await session.execute(delete(Menu))
+        await session.commit()

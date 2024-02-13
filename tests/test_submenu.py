@@ -1,14 +1,23 @@
 from uuid import UUID
+import pytest
+from sqlalchemy import select
+from typing import AsyncGenerator
 
 from app.databases.models import SubMenu
+from httpx import AsyncClient
 
-from .conftest import client
 from .data import menu_data, new_submenu_data, submenu_data, updated_submenu_data
 from .reverse import reverse
+from .conftest import async_session_maker
 
 
-def test_create_submenu(setup_test_database, new_data: dict[str, str] = new_submenu_data) -> None:
-    response = client.post(reverse('create_submenu').format(target_menu_id=menu_data['id']), json=new_data)
+@pytest.mark.asyncio
+async def test_create_submenu(
+        setup_test_database,
+        ac: AsyncGenerator[AsyncClient, None],
+        new_data: dict[str, str] = new_submenu_data
+) -> None:
+    response = await ac.post(reverse('create_submenu').format(target_menu_id=menu_data['id']), json=new_data)
     assert response.status_code == 201
 
     assert response.json()
@@ -18,14 +27,17 @@ def test_create_submenu(setup_test_database, new_data: dict[str, str] = new_subm
     assert data['title'] == new_data['title']
     assert data['description'] == new_data['description']
 
-    data_from_db = setup_test_database.query(SubMenu).filter(SubMenu.id == UUID(data['id'])).first()
+    query = select(SubMenu).where(SubMenu.id == UUID(data['id']))
+    async with async_session_maker() as session:
+        data_from_db = (await session.execute(query)).scalar_one()
     assert data_from_db.id == UUID(data['id'])
     assert data_from_db.title == new_data['title']
     assert data_from_db.description == new_data['description']
 
 
-def test_read_submenu_by_id(setup_test_database) -> None:
-    response = client.get(reverse('read_submenu_by_id').format(
+@pytest.mark.asyncio
+async def test_read_submenu_by_id(setup_test_database, ac: AsyncGenerator[AsyncClient, None]) -> None:
+    response = await ac.get(reverse('read_submenu_by_id').format(
         target_menu_id=menu_data['id'],
         target_submenu_id=submenu_data['id']
     ))
@@ -39,8 +51,9 @@ def test_read_submenu_by_id(setup_test_database) -> None:
     assert data['description'] == submenu_data['description']
 
 
-def test_read_submenu_by_id_not_found() -> None:
-    response = client.get(reverse('read_submenu_by_id').format(
+@pytest.mark.asyncio
+async def test_read_submenu_by_id_not_found(ac: AsyncGenerator[AsyncClient, None]) -> None:
+    response = await ac.get(reverse('read_submenu_by_id').format(
         target_menu_id=menu_data['id'],
         target_submenu_id=submenu_data['id']
     ))
@@ -49,8 +62,9 @@ def test_read_submenu_by_id_not_found() -> None:
     assert response.json()['detail'] == 'submenu not found'
 
 
-def test_read_submenus(setup_test_database) -> None:
-    response = client.get(reverse('read_submenus').format(target_menu_id=menu_data['id']))
+@pytest.mark.asyncio
+async def test_read_submenus(setup_test_database, ac: AsyncGenerator[AsyncClient, None]) -> None:
+    response = await ac.get(reverse('read_submenus').format(target_menu_id=menu_data['id']))
     assert response.status_code == 200
 
     assert response.json()
@@ -62,14 +76,20 @@ def test_read_submenus(setup_test_database) -> None:
     assert data[0]['description'] == submenu_data['description']
 
 
-def test_read_submenus_empty() -> None:
-    response = client.get(reverse('read_submenus').format(target_menu_id=menu_data['id']))
+@pytest.mark.asyncio
+async def test_read_submenus_empty(ac: AsyncGenerator[AsyncClient, None]) -> None:
+    response = await ac.get(reverse('read_submenus').format(target_menu_id=menu_data['id']))
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_update_submenu(setup_test_database, updated_data: dict[str, str] = updated_submenu_data) -> None:
-    response = client.patch(
+@pytest.mark.asyncio
+async def test_update_submenu(
+        setup_test_database,
+        ac: AsyncGenerator[AsyncClient, None],
+        updated_data: dict[str, str] = updated_submenu_data
+) -> None:
+    response = await ac.patch(
         reverse('update_submenu').format(
             target_menu_id=menu_data['id'],
             target_submenu_id=submenu_data['id']
@@ -85,17 +105,22 @@ def test_update_submenu(setup_test_database, updated_data: dict[str, str] = upda
     assert data['title'] == updated_data['title']
     assert data['description'] == updated_data['description']
 
-    data_from_db = setup_test_database.query(SubMenu).filter(SubMenu.id == submenu_data['id']).first()
-    setup_test_database.refresh(data_from_db)
+    query = select(SubMenu).where(SubMenu.id == submenu_data['id'])
+    async with async_session_maker() as session:
+        data_from_db = (await session.execute(query)).scalar()
     assert data_from_db.id == submenu_data['id']
     assert data_from_db.title == updated_data['title']
     assert data_from_db.description == updated_data['description']
 
 
-def test_delete_submenu(setup_test_database) -> None:
-    assert setup_test_database.query(SubMenu).filter(SubMenu.id == submenu_data['id']).first() is not None
+@pytest.mark.asyncio
+async def test_delete_submenu(setup_test_database, ac: AsyncGenerator[AsyncClient, None]) -> None:
+    query = select(SubMenu).where(SubMenu.id == submenu_data['id'])
+    async with async_session_maker() as session:
+        flag_item = (await session.execute(query)).scalar()
+    assert flag_item is not None
 
-    response = client.delete(reverse('update_submenu').format(
+    response = await ac.delete(reverse('update_submenu').format(
         target_menu_id=menu_data['id'],
         target_submenu_id=submenu_data['id']
     ))
@@ -108,4 +133,7 @@ def test_delete_submenu(setup_test_database) -> None:
     assert data['title'] == submenu_data['title']
     assert data['description'] == submenu_data['description']
 
-    assert setup_test_database.query(SubMenu).filter(SubMenu.id == submenu_data['id']).first() is None
+    query = select(SubMenu).where(SubMenu.id == submenu_data['id'])
+    async with async_session_maker() as session:
+        flag_item = (await session.execute(query)).scalar()
+    assert flag_item is None
