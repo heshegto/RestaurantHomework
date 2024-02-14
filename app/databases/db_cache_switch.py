@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends
+from fastapi.encoders import jsonable_encoder
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
@@ -40,6 +41,15 @@ class DBOrCache:
         if data:
             return data
         items = await self.db_crud.read_all_items(db, parent_id)
+
+        # for item in items:
+        #     keyword_ = str(item.id) + ':sale'
+        #     data = cache_crud.read_cache(keyword_, cache)
+        #     if data:
+        #         item = jsonable_encoder(item.scalar())
+        #         item["sale"] = data
+        #         item["price"] = item["price"] * (1 - int(data))
+
         cache_crud.create_cache(keyword, items, cache)
         return items
 
@@ -57,11 +67,13 @@ class DBOrCache:
             return data
         items = await self.db_crud.read_item_by_id(db, target_id, parent_id)
 
-        # keyword_ = self.cache_keys.get_required_keys(target_id, parent_id, grand_id)[-2] + ':sale'
-        # data = cache_crud.read_cache(keyword_, cache)
-        # if data:
-        #     items["sale"] = data
-        #     items["price"] = items["price"] * (1-int(data))
+        keyword_ = str(target_id) + ':sale'
+        data = cache_crud.read_cache(keyword_, cache)
+        if data:
+            items = jsonable_encoder(items.scalar())
+            items["sale"] = data
+            items["price"] = items["price"] * (1-int(data))
+
         cache_crud.create_cache(keyword, items, cache)
         return items
 

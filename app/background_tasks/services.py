@@ -105,10 +105,9 @@ class Updater:
                             self.target_id
                         )
                     invalidation_on_update(self.red, self.target_id, self.parent_id, self.grand_id)
-                    # if file_item['sale']:
-                    #     cache_key = CacheKeys(self.crud_model)
-                    #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2]+':sale'
-                    #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
+                    if file_item['sale']:
+                        keyword = str(self.target_id)+':sale'
+                        await self.red.set(keyword, file_item['sale'])
 
                 '''Start checking child items'''
                 if 'child_menu' in db_item.keys():
@@ -146,10 +145,9 @@ class Updater:
                     )).id
                 invalidation_on_creation(self.red, parent_id=self.parent_id, grand_id=self.grand_id)
 
-                # if file_item['sale']:
-                #     cache_key = CacheKeys(self.crud_model)
-                #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2] + ':sale'
-                #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
+                if file_item['sale']:
+                    keyword = str(self.target_id) + ':sale'
+                    await self.red.set(keyword, file_item['sale'])
 
                 '''Checking child items for missing data'''
                 if 'child_menu' in file_item.keys():
