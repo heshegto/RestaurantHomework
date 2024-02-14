@@ -32,7 +32,6 @@ async def get_base_from_file() -> list[dict[str, list | str]]:
             item['title'] = row[1]
             item['description'] = row[2]
             item['child_menu'] = []
-
             base_from_file.append(item)
         elif type(row[1]) is int:
             item['title'] = row[2]
@@ -43,11 +42,8 @@ async def get_base_from_file() -> list[dict[str, list | str]]:
             item['title'] = row[3]
             item['description'] = row[4]
             item['price'] = f'{round(float(row[5]), 2):.2f}'
+            item['sale'] = row[6]
             base_from_file[-1]['child_menu'][-1]['dish'].append(item)
-            if row[6]:
-                item['sale'] = row[6]
-            else:
-                item['sale'] = None
     return base_from_file
 
 
