@@ -18,6 +18,8 @@ services:
       - .env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_DB_USER}" ]
+    networks:
+      - ylab_network
 
   redis:
     container_name: ${REDIS_NAME}
@@ -32,6 +34,12 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
+    networks:
+      - ylab_network
+    volumes:
+      - ylab_red:/data
+    expose:
+      - ${REDIS_PORT}
   app:
     container_name: ${APP_NAME}
     build:
@@ -42,6 +50,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     command: bash -c 'uvicorn app.main:app --host ${APP_HOST} --port ${APP_HOST_PORT}'
     volumes:
       - ./app:/src/app
@@ -50,12 +60,16 @@ services:
     restart: always
     env_file:
       - .env
+    networks:
+      - ylab_network
 
   rabbitmq:
     container_name: ${RABBITMQ_CONTAINER_NAME}
     image: rabbitmq:latest
     hostname: ${RABBITMQ_HOST}
     restart: always
+    volumes:
+      - ylab_rabbit:/var/lib/rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
@@ -77,6 +91,18 @@ services:
     env_file:
       - .env
     restart: always
-    command: [ "celery", "--app=src.app.background_tasks.tasks:synchronization", "worker", "-l", "INFO" ]
+    command: bash -c 'celery -A app.background_tasks.tasks beat -l INFO'
     depends_on:
       - app
+    volumes:
+      - ./app:/src/app
+networks:
+  ylab_network:
+    name: ylab_network
+volumes:
+  ylab_pg:
+    name: ylab_pg
+  ylab_red:
+    name: ylab_red
+  ylab_rabbit:
+    name: ylab_rabbit

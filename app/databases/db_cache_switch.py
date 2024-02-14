@@ -55,6 +55,12 @@ class DBOrCache:
         if data:
             return data
         items = await self.db_crud.read_item_by_id(db, target_id, parent_id)
+
+        # keyword_ = self.cache_keys.get_required_keys(target_id, parent_id, grand_id)[-2] + ':sale'
+        # data = cache_crud.read_cache(keyword_, cache)
+        # if data:
+        #     items["sale"] = data
+        #     items["price"] = items["price"] * (1-int(data))
         cache_crud.create_cache(keyword, items, cache)
         return items
 

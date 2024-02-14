@@ -5,7 +5,6 @@ from .databases import models
 from .databases.db.database import engine
 from .databases.cache.cache import get_redis
 # from .background_tasks.tasks import synchronization
-# from .tasks.tasks import update_base
 
 app = FastAPI(
     title='Restaurant API',

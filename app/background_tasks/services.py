@@ -9,14 +9,16 @@ from app.databases.db.database import SessionLocal
 from app.business.schemas import MenuCreate, SubMenuCreate, DishCreate
 from app.databases.db.crud import MenuCRUD, SubMenuCRUD, DishCRUD
 from fastapi import Query
+from app.databases.cache.cache_keys import CacheKeys
+from app.databases.cache import crud as cache_crud
 
-file_path = '../admin/Menu.xlsx'
+file_path = 'app/admin/Menu.xlsx'
 
 
 async def get_base_from_file() -> list[dict[str, list | str]]:
     base_from_file = []
+    workbook = openpyxl.load_workbook(file_path)
     try:
-        workbook = openpyxl.load_workbook(file_path)
         sheet = workbook.active
     finally:
         workbook.close()
@@ -39,12 +41,14 @@ async def get_base_from_file() -> list[dict[str, list | str]]:
             item['description'] = row[4]
             item['price'] = f'{round(float(row[5]), 2):.2f}'
             base_from_file[-1]['child_menu'][-1]['dish'].append(item)
+            if row[6]:
+                item['sale'] = row[6]
+            else:
+                item['sale'] = None
     return base_from_file
 
 
 async def get_base_from_db() -> Query:
-    # url = 'http://127.0.0.1:8000/api/v1/everything'
-    # return requests.get(url).json()
     async with SessionLocal() as session:
         return await read_everything(session)
 
@@ -91,7 +95,7 @@ class Updater:
                     if db_item[key] != file_item[key]:
                         flag = False
                 if not flag:
-                    update_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish'}
+                    update_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish' and i != 'sale'}
                     async with SessionLocal() as session:
                         await self.crud_model.update_item(
                             session,
@@ -99,6 +103,11 @@ class Updater:
                             self.target_id
                         )
                     invalidation_on_update(self.red, self.target_id, self.parent_id, self.grand_id)
+                    # if file_item['sale']:
+                    #     cache_key = CacheKeys(self.crud_model)
+                    #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2]+':sale'
+                    #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
+
                 if 'child_menu' in db_item.keys():
                     submenu = Updater(
                         data_from_db=db_item['child_menu'],
@@ -119,7 +128,6 @@ class Updater:
                         schema_model=DishCreate
                     )
                     await dish.compare()
-        await self.push_new()
 
     async def push_new(self) -> None:
         for file_item in self.data_from_file:
@@ -133,6 +141,12 @@ class Updater:
                         self.parent_id
                     )).id
                 invalidation_on_creation(self.red, parent_id=self.parent_id, grand_id=self.grand_id)
+
+                # if file_item['sale']:
+                #     cache_key = CacheKeys(self.crud_model)
+                #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2] + ':sale'
+                #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
+
                 if 'child_menu' in file_item.keys():
                     submenu = Updater(
                         data_from_db=[{}],
@@ -181,3 +195,6 @@ async def start() -> None:
     data_from_file = await get_base_from_file()
     menu = Updater(data_from_db, data_from_file, crud_model=MenuCRUD(), schema_model=MenuCreate)
     await menu.compare()
+    await menu.push_new()
+# import asyncio
+# asyncio.run(start())
