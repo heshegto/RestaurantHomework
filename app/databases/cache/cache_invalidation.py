@@ -1,9 +1,10 @@
 from uuid import UUID
 
-from redis import Redis
 from fastapi import Depends
-from app.databases.cache.cache import get_redis
+from redis import Redis
+
 from app.databases.cache import crud as cache_crud
+from app.databases.cache.cache import get_redis
 from app.databases.cache.cache_keys import CacheKeys
 from app.databases.db.crud import DishCRUD, MenuCRUD, SubMenuCRUD
 

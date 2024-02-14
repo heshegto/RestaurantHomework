@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.query import Query
 
 from app.business import schemas
 from app.databases.models import Dish
+
 from .crud_base import BaseCRUDModel
 
 

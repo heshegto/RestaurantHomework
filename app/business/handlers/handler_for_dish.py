@@ -1,16 +1,17 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.databases.cache import cache_invalidation
 from app.databases.cache.cache import get_redis
 from app.databases.db.crud import DishCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache
+
 from ..schemas import Dish, DishCreate
 from .services import all_responses, is_dish_none
-from app.databases.cache import cache_invalidation
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus/{target_submenu_id}/dishes', tags=['Dish'])
 db_loader = DBOrCache(DishCRUD())

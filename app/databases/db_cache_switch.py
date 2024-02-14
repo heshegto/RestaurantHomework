@@ -1,11 +1,9 @@
 from uuid import UUID
 
+from fastapi import Depends
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
-from fastapi import Depends
-from .db.database import get_db
-from .cache.cache import get_redis
 
 from app.business.schemas import (
     Dish,
@@ -17,9 +15,12 @@ from app.business.schemas import (
     SubMenuCreate,
     SubMenuRead,
 )
+
 from .cache import crud as cache_crud
+from .cache.cache import get_redis
 from .cache.cache_keys import CacheKeys
 from .db.crud import DishCRUD, MenuCRUD, SubMenuCRUD, read_everything
+from .db.database import get_db
 
 
 class DBOrCache:
@@ -67,7 +68,7 @@ class DBOrCache:
     async def create(
             self,
             db: AsyncSession = Depends(get_db),
-            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
+            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate(),
             parent_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
         return await self.db_crud.create_item(db, schema, parent_id)
@@ -75,7 +76,7 @@ class DBOrCache:
     async def update(
             self,
             db: AsyncSession = Depends(get_db),
-            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
+            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate(),
             target_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
         return await self.db_crud.update_item(db, schema, target_id)

@@ -1,7 +1,7 @@
-from uuid import UUID
-import pytest
 from typing import AsyncGenerator
+from uuid import UUID
 
+import pytest
 from httpx import AsyncClient
 
 from .reverse import reverse

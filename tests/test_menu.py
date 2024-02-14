@@ -1,14 +1,15 @@
-from uuid import UUID
-import pytest
-from sqlalchemy import select
 from typing import AsyncGenerator
+from uuid import UUID
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import select
 
 from app.databases.models import Menu
-from httpx import AsyncClient
 
+from .conftest import async_session_maker
 from .data import menu_data, new_menu_data, updated_menu_data
 from .reverse import reverse
-from .conftest import async_session_maker
 
 
 @pytest.mark.asyncio

@@ -1,9 +1,8 @@
 import os
-import logging
 
 from celery import Celery
+
 from .services import start
-import asyncio
 
 RABBITMQ_DATABASE_URL = 'pyamqp://{}:{}@{}:{}'.format(
     os.getenv('RABBITMQ_USER', 'guest'),
@@ -26,14 +25,7 @@ celery_app.conf.beat_schedule = {
 
 }
 
+
 @celery_app.task(default_retry_delay=15, max_retries=None,)
 async def synchronization() -> None:
     await start()
-    # result = event_loop().run_until_comlete(start())
-    # return result
-    # try:
-    #     asyncio.run(start())
-    # except Exception as error:
-    #     logging.error(error)
-    # finally:
-    #     synchronization.retry()

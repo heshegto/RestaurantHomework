@@ -91,7 +91,7 @@ services:
     env_file:
       - .env
     restart: always
-    command: bash -c 'celery -A app.background_tasks.tasks beat -l INFO'
+    command: bash -c 'celery -A app.background_tasks.tasks worker -l INFO -B'
     depends_on:
       - app
     volumes:

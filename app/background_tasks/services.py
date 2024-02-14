@@ -1,16 +1,19 @@
-import openpyxl
-from app.databases.db.crud import read_everything
-from fastapi.encoders import jsonable_encoder
 from uuid import UUID
-from app.databases.cache.cache import get_redis
-from app.databases.cache.cache_invalidation import invalidation_on_delete, invalidation_on_update, invalidation_on_creation
-from redis import Redis
-from app.databases.db.database import SessionLocal
-from app.business.schemas import MenuCreate, SubMenuCreate, DishCreate
-from app.databases.db.crud import MenuCRUD, SubMenuCRUD, DishCRUD
+
+import openpyxl
 from fastapi import Query
-from app.databases.cache.cache_keys import CacheKeys
-from app.databases.cache import crud as cache_crud
+from fastapi.encoders import jsonable_encoder
+from redis import Redis
+
+from app.business.schemas import DishCreate, MenuCreate, SubMenuCreate
+from app.databases.cache.cache import get_redis
+from app.databases.cache.cache_invalidation import (
+    invalidation_on_creation,
+    invalidation_on_delete,
+    invalidation_on_update,
+)
+from app.databases.db.crud import DishCRUD, MenuCRUD, SubMenuCRUD, read_everything
+from app.databases.db.database import SessionLocal
 
 file_path = 'app/admin/Menu.xlsx'
 
@@ -69,8 +72,8 @@ class Updater:
             parent_id: UUID | None = None,
             grand_id: UUID | None = None,
             red: Redis = get_redis(),
-            crud_model: MenuCRUD | SubMenuCRUD | DishCRUD = MenuCRUD,
-            schema_model: MenuCreate | SubMenuCreate | DishCreate = MenuCreate
+            crud_model: MenuCRUD | SubMenuCRUD | DishCRUD = MenuCRUD(),
+            schema_model: type[MenuCreate] | type[SubMenuCreate] | type[DishCreate] = MenuCreate
     ) -> None:
         self.data_from_db = data_from_db
         self.data_from_file = data_from_file
@@ -95,7 +98,8 @@ class Updater:
                     if db_item[key] != file_item[key]:
                         flag = False
                 if not flag:
-                    update_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish' and i != 'sale'}
+                    update_item = {i: file_item[i] for i in file_item.keys(
+                    ) if i != 'child_menu' and i != 'dish' and i != 'sale'}
                     async with SessionLocal() as session:
                         await self.crud_model.update_item(
                             session,
@@ -196,5 +200,3 @@ async def start() -> None:
     menu = Updater(data_from_db, data_from_file, crud_model=MenuCRUD(), schema_model=MenuCreate)
     await menu.compare()
     await menu.push_new()
-# import asyncio
-# asyncio.run(start())

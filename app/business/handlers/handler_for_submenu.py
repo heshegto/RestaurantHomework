@@ -1,16 +1,17 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.databases.cache import cache_invalidation
 from app.databases.cache.cache import get_redis
 from app.databases.db.crud import SubMenuCRUD
 from app.databases.db.database import get_db
 from app.databases.db_cache_switch import DBOrCache
+
 from ..schemas import SubMenu, SubMenuCreate, SubMenuRead
 from .services import all_responses, is_submenu_none
-from app.databases.cache import cache_invalidation
 
 router = APIRouter(prefix='/api/v1/menus/{target_menu_id}/submenus', tags=['Submenu'])
 db_loader = DBOrCache(SubMenuCRUD())

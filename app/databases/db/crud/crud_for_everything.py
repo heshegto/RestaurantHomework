@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm.query import Query
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.query import Query
 
-from app.databases.models import Dish, Menu, SubMenu
+from app.databases.models import Menu, SubMenu
 
 
 async def read_everything(db: AsyncSession) -> Query:

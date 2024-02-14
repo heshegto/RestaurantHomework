@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 
-from .business.handlers import dish_router, menu_router, submenu_router, all_router
+from .business.handlers import all_router, dish_router, menu_router, submenu_router
 from .databases import models
-from .databases.db.database import engine
 from .databases.cache.cache import get_redis
+from .databases.db.database import engine
+
 # from .background_tasks.tasks import synchronization
 
 app = FastAPI(
@@ -27,7 +28,7 @@ app = FastAPI(
 )
 
 
-@app.on_event("startup")
+@app.on_event('startup')
 async def init_tables() -> None:
     red = get_redis()
     red.flushdb()

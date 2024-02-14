@@ -1,25 +1,21 @@
+import asyncio
 import os
-import pytest_asyncio
 from typing import AsyncGenerator
+
+import pytest_asyncio
 from httpx import AsyncClient
 from redis import Redis
-
+from sqlalchemy import delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import insert, delete
-
-from app.databases.db.database import get_db
-from app.main import app
-from typing import Generator
-
-import asyncio
+from sqlalchemy.pool import NullPool
 
 from app.databases.cache.cache import get_redis
-from app.databases.db.database import Base
+from app.databases.db.database import Base, get_db
 from app.databases.models import Dish, Menu, SubMenu
+from app.main import app
 
 from .data import dish_data, menu_data, submenu_data
-from sqlalchemy.pool import NullPool
 
 TEST_DATABASE_URL = 'postgresql+asyncpg://{}:{}@{}/{}'.format(
     os.getenv('POSTGRES_DB_USER', 'postgres'),
@@ -55,7 +51,7 @@ def event_loop(request):
 
 
 @pytest_asyncio.fixture(autouse=True, scope='session')
-async def create_test_database() -> Generator:
+async def create_test_database() -> AsyncGenerator[None, None]:
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -70,7 +66,7 @@ async def ac() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest_asyncio.fixture(autouse=False, scope='function')
-async def setup_test_database(red: Redis = get_redis()) -> None:
+async def setup_test_database(red: Redis = get_redis()) -> AsyncGenerator[None, None]:
     query1 = insert(Menu).values(
         id=menu_data['id'],
         title=menu_data['title'],

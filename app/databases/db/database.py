@@ -1,7 +1,6 @@
 import os
-from typing import Iterator
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -17,7 +16,7 @@ engine = create_async_engine(DATABASE_URL)
 SessionLocal = sessionmaker(engine, autocommit=False, autoflush=False, class_=AsyncSession, expire_on_commit=False)
 
 
-async def get_db() -> Iterator[AsyncSession]:
+async def get_db() -> AsyncSession:
     db = SessionLocal()
     try:
         yield db

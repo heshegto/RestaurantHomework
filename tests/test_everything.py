@@ -1,10 +1,9 @@
-from uuid import UUID
-import pytest
-
 from typing import AsyncGenerator
+from uuid import UUID
 
+import pytest
 from httpx import AsyncClient
-from .conftest import ac
+
 from .data import dish_data, menu_data, submenu_data
 from .reverse import reverse
 
