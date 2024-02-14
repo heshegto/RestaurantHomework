@@ -42,6 +42,7 @@ def invalidation_on_delete(
         parent_id,
         grand_id
     ) + ['everything']
+    keywords = keywords + cache.keys(keywords[-2])
     cache_crud.delete_cache(keywords, cache=cache)
 
 

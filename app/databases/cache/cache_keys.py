@@ -6,18 +6,18 @@ class CacheKeys:
     def __init__(self, db_crud_type: MenuCRUD | SubMenuCRUD | DishCRUD) -> None:
         menu_keys = [
             'menus',
-            'menu:{menu_id}',
-            'menu:{menu_id}:*',
+            'menus:{menu_id}',
+            'menus:{menu_id}:*',
         ]
         submenu_keys = [
-            'menu:{menu_id}:submenus',
-            'menu:{menu_id}:submenu:{submenu_id}',
-            'menu:{menu_id}:submenu:{submenu_id}:*',
+            'menus:{menu_id}:submenus',
+            'menus:{menu_id}:submenus:{submenu_id}',
+            'menus:{menu_id}:submenus:{submenu_id}:*',
         ]
         dish_keys = [
-            'menu:{menu_id}:submenu:{submenu_id}:dishes',
-            'menu:{menu_id}:submenu:{submenu_id}:dish:{dish_id}',
-            'menu:{menu_id}:submenu:{submenu_id}:dish:{dish_id}:*',
+            'menus:{menu_id}:submenus:{submenu_id}:dishes',
+            'menus:{menu_id}:submenus:{submenu_id}:dishes:{dish_id}',
+            'menus:{menu_id}:submenus:{submenu_id}:dishes:{dish_id}:*',
         ]
         match db_crud_type:
             case MenuCRUD():

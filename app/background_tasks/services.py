@@ -1,37 +1,23 @@
-import os
 import openpyxl
-import requests
+from app.databases.db.crud import read_everything
+import asyncio
+from fastapi.encoders import jsonable_encoder
+from uuid import UUID
+from app.databases.cache.cache import get_redis
+from app.databases.cache.cache_invalidation import invalidation_on_delete, invalidation_on_update, invalidation_on_creation
+from redis import Redis
+from app.databases.db.database import SessionLocal
+from app.business.schemas import MenuCreate, SubMenuCreate, DishCreate
+from app.databases.db.crud import MenuCRUD, SubMenuCRUD, DishCRUD
 
 file_path = '../admin/Menu.xlsx'
 last_date = 0
 
 
-def get_last_modified_date(file_path):
-    try:
-        return os.stat(file_path).st_mtime
-    except FileNotFoundError:
-        print("File Not Found")
-    except Exception as e:
-        print("Error happened:", e)
-
-
-def check_for_updates():
-    global last_date
-    if os.path.exists(file_path):
-        last_modified_date = get_last_modified_date(file_path)
-        if last_modified_date != last_date:
-            last_date = last_modified_date
-            return last_date
-        else:
-            return False
-    else:
-        raise Exception('File for synchronization does not exist')
-
-
-def get_base_from_file():
+async def get_base_from_file():
     base_from_file = []
-    workbook = openpyxl.load_workbook(file_path)
     try:
+        workbook = openpyxl.load_workbook(file_path)
         sheet = workbook.active
     finally:
         workbook.close()
@@ -41,116 +27,160 @@ def get_base_from_file():
         if type(row[0]) is int:
             item['title'] = row[1]
             item['description'] = row[2]
-            item['submenus'] = []
+            item['child_menu'] = []
 
             base_from_file.append(item)
         elif type(row[1]) is int:
             item['title'] = row[2]
             item['description'] = row[3]
-            item['dishes'] = []
-            base_from_file[-1]['submenus'].append(item)
+            item['dish'] = []
+            base_from_file[-1]['child_menu'].append(item)
         elif type(row[2]) is int:
             item['title'] = row[3]
             item['description'] = row[4]
-            item['price'] = row[5]
-            base_from_file[-1]['submenus'][-1]['dishes'].append(item)
+            item['price'] = f'{round(float(row[5]), 2):.2f}'
+            base_from_file[-1]['child_menu'][-1]['dish'].append(item)
     return base_from_file
 
 
-def get_list_of_titles_and_ids(item_list: list[dict]) -> dict:
-    result = {}
-    for item_ in item_list:
-        result[item_['title']] = item_['id']
-    return result
+async def get_base_from_db():
+    # url = 'http://127.0.0.1:8000/api/v1/everything'
+    # return requests.get(url).json()
+    async with SessionLocal() as session:
+        return await read_everything(session)
 
 
-def creat_dishes(submenu: dict, menu_id: str, submenu_id: str) -> None:
-    url = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes'
-    for dish in submenu['dishes']:
-        requests.post(url, json={'title': dish['title'], 'description': dish['description'],
-                                 'price': f'{round(float(dish['price']), 2):.2f}'})
+def find_dict_by_key_value(list_of_dicts, key, value):
+    for d in list_of_dicts:
+        if d.get(key) == value:
+            return d
+    return None
 
 
-def creat_submenus(menu: dict, menu_id: str) -> None:
-    url = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus'
-    for submenu in menu['submenus']:
-        submenu_id = requests.post(url, json={'title': submenu['title'], 'description': submenu['description']}).json()[
-            'id']
-        creat_dishes(submenu, menu_id, submenu_id)
+class Updater:
+    def __init__(
+            self,
+            data_from_db,
+            data_from_file,
+            target_id: UUID | None = None,
+            parent_id: UUID | None = None,
+            grand_id: UUID | None = None,
+            red: Redis = get_redis(),
+            crud_model: MenuCRUD | SubMenuCRUD | DishCRUD = MenuCRUD,
+            schema_model: MenuCreate | SubMenuCreate | DishCreate = MenuCreate
+    ):
+        self.data_from_db = data_from_db
+        self.data_from_file = data_from_file
+        self.target_id = target_id
+        self.parent_id = parent_id
+        self.grand_id = grand_id
+        self.red = red
+        self.crud_model = crud_model
+        self.schema_model = schema_model
+
+    async def compare(self):
+        for db_item in self.data_from_db:
+            self.target_id = db_item['id']
+            file_item = find_dict_by_key_value(self.data_from_file, 'title', db_item['title'])
+            if not file_item:
+                async with SessionLocal() as session:
+                    await self.crud_model.delete_item(session, self.target_id)
+                invalidation_on_delete(self.red, self.target_id, self.parent_id, self.grand_id)
+            else:
+                flag = True
+                for key in file_item.keys():
+                    if db_item[key] != file_item[key]:
+                        flag = False
+                if not flag:
+                    update_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish'}
+                    async with SessionLocal() as session:
+                        await self.crud_model.update_item(
+                            session,
+                            self.schema_model.model_validate(update_item),
+                            self.target_id
+                        )
+                    invalidation_on_update(self.red, self.target_id, self.parent_id, self.grand_id)
+                if 'child_menu' in db_item.keys():
+                    submenu = Updater(
+                        data_from_db=db_item['child_menu'],
+                        data_from_file=file_item['child_menu'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=SubMenuCRUD(),
+                        schema_model=SubMenuCreate
+                    )
+                    await submenu.compare()
+                elif 'dish' in db_item.keys():
+                    dish = Updater(
+                        data_from_db=db_item['dish'],
+                        data_from_file=file_item['dish'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=DishCRUD(),
+                        schema_model=DishCreate
+                    )
+                    await dish.compare()
+        await self.push_new()
+
+    async def push_new(self):
+        for file_item in self.data_from_file:
+            db_item = find_dict_by_key_value(self.data_from_db, 'title', file_item['title'])
+            if not db_item:
+                create_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish'}
+                async with SessionLocal() as session:
+                    self.target_id = (await self.crud_model.create_item(
+                        session,
+                        self.schema_model.model_validate(create_item),
+                        self.parent_id
+                    )).id
+                invalidation_on_creation(self.red, parent_id=self.parent_id, grand_id=self.grand_id)
+                if 'child_menu' in file_item.keys():
+                    submenu = Updater(
+                        data_from_db=[{}],
+                        data_from_file=file_item['child_menu'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=SubMenuCRUD(),
+                        schema_model=SubMenuCreate
+                    )
+                    await submenu.push_new()
+                elif 'dish' in file_item.keys():
+                    dish = Updater(
+                        data_from_db=[{}],
+                        data_from_file=file_item['dish'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=DishCRUD(),
+                        schema_model=DishCreate
+                    )
+                    await dish.push_new()
+            else:
+                if 'child_menu' in file_item.keys():
+                    submenu = Updater(
+                        data_from_db=db_item['child_menu'],
+                        data_from_file=file_item['child_menu'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=SubMenuCRUD(),
+                        schema_model=SubMenuCreate
+                    )
+                    await submenu.push_new()
+                elif 'dish' in file_item.keys():
+                    dish = Updater(
+                        data_from_db=db_item['dish'],
+                        data_from_file=file_item['dish'],
+                        parent_id=self.target_id,
+                        grand_id=self.parent_id,
+                        crud_model=DishCRUD(),
+                        schema_model=DishCreate
+                    )
+                    await dish.push_new()
 
 
-def push_new() -> None:
-    url = 'http://127.0.0.1:8000/api/v1/menus'
-    menus_from_base = requests.get(url).json()
-    for menu_item in get_base_from_file():
-        if menu_item['title'] not in get_list_of_titles_and_ids(menus_from_base):
-            menu_id = \
-            requests.post(url, json={'title': menu_item['title'], 'description': menu_item['description']}).json()['id']
-            creat_submenus(menu_item, menu_id)
-        else:
-            for submenu_item in menu_item['submenus']:
-                menu_id = get_list_of_titles_and_ids(menus_from_base)[menu_item['title']]
-                suburl = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus'
-                submenus_from_base = requests.get(suburl).json()
-                if submenu_item['title'] not in get_list_of_titles_and_ids(submenus_from_base):
-                    submenu_id = requests.post(suburl, json={'title': submenu_item['title'],
-                                                             'description': submenu_item['description']}).json()['id']
-                    creat_dishes(submenu_item, menu_id, submenu_id)
-                else:
-                    for dish_item in submenu_item['dishes']:
-                        submenu_id = get_list_of_titles_and_ids(submenus_from_base)[submenu_item['title']]
-                        dishurl = f'http://127.0.0.1:8000/api/v1/menus/{menu_id}/submenus/{submenu_id}/dishes'
-                        dishes_from_base = requests.get(suburl).json()
-                        if dish_item['title'] not in get_list_of_titles_and_ids(dishes_from_base):
-                            requests.post(dishurl,
-                                          json={'title': dish_item['title'], 'description': dish_item['description'],
-                                                'price': f'{round(float(dish_item['price']), 2):.2f}'})
+async def start():
+    data_from_db = jsonable_encoder(await get_base_from_db())
+    data_from_file = await get_base_from_file()
+    menu = Updater(data_from_db, data_from_file, crud_model=MenuCRUD(), schema_model=MenuCreate)
+    await menu.compare()
 
-
-def find_submenus_in_menu(target_menus: list[dict], title: str) -> list:
-    for dictionary in target_menus:
-        if title == dictionary['title']:
-            return dictionary['submenus']
-    return []
-
-
-def find_dishes_in_submenu(target_submenus: list[dict], title: str) -> list:
-    for dictionary in target_submenus:
-        if title == dictionary['title']:
-            return dictionary['dishes']
-    return []
-
-
-def get_list_of_titles(item_list: list) -> list:
-    titles = []
-    for item_ in item_list:
-        titles.append(item_['title'])
-    return titles
-
-
-def del_old() -> None:
-    url = 'http://127.0.0.1:8000/api/v1/menus'
-    menus_from_base = requests.get(url).json()
-    menu_list_from_file = get_list_of_titles(get_base_from_file())
-    for menu in menus_from_base:
-        if menu['title'] not in menu_list_from_file:
-            menurl = url + '/' + menu['id']
-            requests.delete(menurl)
-        else:
-            url2 = f'http://127.0.0.1:8000/api/v1/menus/{menu["id"]}/submenus'
-            submenus_from_base = requests.get(url2).json()
-            submenu_list_from_file = get_list_of_titles(find_submenus_in_menu(get_base_from_file(), menu['title']))
-            for submenu in submenus_from_base:
-                if submenu['title'] not in submenu_list_from_file:
-                    suburl = url + '/' + submenu['id']
-                    requests.delete(suburl)
-                else:
-                    url3 = f'http://127.0.0.1:8000/api/v1/menus/{menu["id"]}/submenus/{submenu["id"]}/dishes'
-                    dish_from_base = requests.get(url3).json()
-                    dish_list_from_file = get_list_of_titles(
-                        find_dishes_in_submenu(find_submenus_in_menu(get_base_from_file(), menu['title']),
-                                               submenu['title']))
-                    for dish in dish_from_base:
-                        if dish['title'] not in dish_list_from_file:
-                            dishurl = url3 + '/' + dish['id']
-                            requests.delete(dishurl)
+asyncio.run(start())

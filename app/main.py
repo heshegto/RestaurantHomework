@@ -4,7 +4,8 @@ from .business.handlers import dish_router, menu_router, submenu_router, all_rou
 from .databases import models
 from .databases.db.database import engine
 from .databases.cache.cache import get_redis
-from .background_tasks.tasks import synchronization
+# from .background_tasks.tasks import synchronization
+# from .tasks.tasks import update_base
 
 app = FastAPI(
     title='Restaurant API',
@@ -33,7 +34,7 @@ async def init_tables():
     red.flushdb()
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
-    synchronization.delay()
+    # synchronization.delay()
 
 
 app.include_router(menu_router)
