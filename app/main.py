@@ -29,7 +29,7 @@ app = FastAPI(
 
 
 @app.on_event("startup")
-async def init_tables():
+async def init_tables() -> None:
     red = get_redis()
     red.flushdb()
     async with engine.begin() as conn:

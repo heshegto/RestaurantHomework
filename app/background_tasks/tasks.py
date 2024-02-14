@@ -1,6 +1,6 @@
 import os
 from celery import Celery
-from .services import push_new, del_old
+from .services import start
 
 SQLALCHEMY_DATABASE_URL = 'pyamqp://{}:{}@{}:{}'.format(
     os.getenv('RABBITMQ_USER', 'guest'),
@@ -13,9 +13,8 @@ celery_app = Celery('tasks', broker=SQLALCHEMY_DATABASE_URL)
 
 
 @celery_app.task()
-def synchronization():
-    push_new()
-    del_old()
+async def synchronization() -> None:
+    await start()
 
 
 @celery_app.on_after_configure.connect

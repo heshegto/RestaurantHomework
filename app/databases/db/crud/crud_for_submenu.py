@@ -12,9 +12,6 @@ class SubMenuCRUD(BaseCRUDModel):
     def __init__(self) -> None:
         self.model = SubMenu
 
-    def get_all_items_query(self, parent_id: UUID):
-        return
-
     async def read_all_items(self, db: AsyncSession, parent_id: UUID | None) -> Query:
         query = select(
             self.model.id,

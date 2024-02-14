@@ -1,6 +1,5 @@
 import openpyxl
 from app.databases.db.crud import read_everything
-import asyncio
 from fastapi.encoders import jsonable_encoder
 from uuid import UUID
 from app.databases.cache.cache import get_redis
@@ -9,12 +8,12 @@ from redis import Redis
 from app.databases.db.database import SessionLocal
 from app.business.schemas import MenuCreate, SubMenuCreate, DishCreate
 from app.databases.db.crud import MenuCRUD, SubMenuCRUD, DishCRUD
+from fastapi import Query
 
 file_path = '../admin/Menu.xlsx'
-last_date = 0
 
 
-async def get_base_from_file():
+async def get_base_from_file() -> list[dict[str, list | str]]:
     base_from_file = []
     try:
         workbook = openpyxl.load_workbook(file_path)
@@ -43,14 +42,14 @@ async def get_base_from_file():
     return base_from_file
 
 
-async def get_base_from_db():
+async def get_base_from_db() -> Query:
     # url = 'http://127.0.0.1:8000/api/v1/everything'
     # return requests.get(url).json()
     async with SessionLocal() as session:
         return await read_everything(session)
 
 
-def find_dict_by_key_value(list_of_dicts, key, value):
+def find_dict_by_key_value(list_of_dicts, key, value) -> dict[str, str] | None:
     for d in list_of_dicts:
         if d.get(key) == value:
             return d
@@ -68,7 +67,7 @@ class Updater:
             red: Redis = get_redis(),
             crud_model: MenuCRUD | SubMenuCRUD | DishCRUD = MenuCRUD,
             schema_model: MenuCreate | SubMenuCreate | DishCreate = MenuCreate
-    ):
+    ) -> None:
         self.data_from_db = data_from_db
         self.data_from_file = data_from_file
         self.target_id = target_id
@@ -78,7 +77,7 @@ class Updater:
         self.crud_model = crud_model
         self.schema_model = schema_model
 
-    async def compare(self):
+    async def compare(self) -> None:
         for db_item in self.data_from_db:
             self.target_id = db_item['id']
             file_item = find_dict_by_key_value(self.data_from_file, 'title', db_item['title'])
@@ -122,7 +121,7 @@ class Updater:
                     await dish.compare()
         await self.push_new()
 
-    async def push_new(self):
+    async def push_new(self) -> None:
         for file_item in self.data_from_file:
             db_item = find_dict_by_key_value(self.data_from_db, 'title', file_item['title'])
             if not db_item:
@@ -177,10 +176,8 @@ class Updater:
                     await dish.push_new()
 
 
-async def start():
+async def start() -> None:
     data_from_db = jsonable_encoder(await get_base_from_db())
     data_from_file = await get_base_from_file()
     menu = Updater(data_from_db, data_from_file, crud_model=MenuCRUD(), schema_model=MenuCreate)
     await menu.compare()
-
-asyncio.run(start())
