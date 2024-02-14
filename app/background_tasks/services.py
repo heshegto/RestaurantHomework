@@ -89,10 +89,12 @@ class Updater:
             self.target_id = db_item['id']
             file_item = find_dict_by_key_value(self.data_from_file, 'title', db_item['title'])
             if not file_item:
+                '''Check for excess data in database'''
                 async with SessionLocal() as session:
                     await self.crud_model.delete_item(session, self.target_id)
                 invalidation_on_delete(self.red, self.target_id, self.parent_id, self.grand_id)
             else:
+                '''Check if data in database needs update'''
                 flag = True
                 for key in file_item.keys():
                     if db_item[key] != file_item[key]:
@@ -112,6 +114,7 @@ class Updater:
                     #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2]+':sale'
                     #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
 
+                '''Start checking child items'''
                 if 'child_menu' in db_item.keys():
                     submenu = Updater(
                         data_from_db=db_item['child_menu'],
@@ -135,6 +138,7 @@ class Updater:
 
     async def push_new(self) -> None:
         for file_item in self.data_from_file:
+            '''Pushing missing data to database'''
             db_item = find_dict_by_key_value(self.data_from_db, 'title', file_item['title'])
             if not db_item:
                 create_item = {i: file_item[i] for i in file_item.keys() if i != 'child_menu' and i != 'dish'}
@@ -151,6 +155,7 @@ class Updater:
                 #     keyword = cache_key.get_required_keys(self.target_id, self.parent_id, self.grand_id)[-2] + ':sale'
                 #     cache_crud.create_cache(keyword, file_item['sale'], self.red)
 
+                '''Checking child items for missing data'''
                 if 'child_menu' in file_item.keys():
                     submenu = Updater(
                         data_from_db=[{}],
@@ -195,6 +200,10 @@ class Updater:
 
 
 async def start() -> None:
+    """
+    if you start this function like this `asyncio.run(start())`, it will do it's job, but if start it from celery
+    it will do nothing. I don't know how to solve it
+    """
     data_from_db = jsonable_encoder(await get_base_from_db())
     data_from_file = await get_base_from_file()
     menu = Updater(data_from_db, data_from_file, crud_model=MenuCRUD(), schema_model=MenuCreate)

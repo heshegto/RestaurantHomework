@@ -4,14 +4,10 @@
 `git clone https://github.com/heshegto/RestaurantHomework.git`
 2) Install required packages:<br/>
 `pip install -r requirements.txt`
-3) Run `pre-commit` installation:<br/>
-`pre-commit install`
-4) Run `pre-commit` check:<br/>
-`pre-commit run --all-files`
-5) Change parameters in `.env` file if you need
-6) Run app image build:<br/>
+3) Change parameters in `.env` file if you need
+4) Run app image build:<br/>
 `docker-compose -f docker-compose.yml up --build -d`
-7) Run test image build:<br/>
+5) Run test image build:<br/>
 `docker-compose -f docker-compose-pytest.yml up --build -d`
 
 ## How to start testing 3 homework:
