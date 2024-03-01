@@ -80,7 +80,7 @@ class DBOrCache:
     async def create(
             self,
             db: AsyncSession = Depends(get_db),
-            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate(),
+            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
             parent_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
         return await self.db_crud.create_item(db, schema, parent_id)
@@ -88,7 +88,7 @@ class DBOrCache:
     async def update(
             self,
             db: AsyncSession = Depends(get_db),
-            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate(),
+            schema: DishCreate | SubMenuCreate | MenuCreate = DishCreate,
             target_id: UUID | None = None,
     ) -> Menu | SubMenu | Dish | None:
         return await self.db_crud.update_item(db, schema, target_id)

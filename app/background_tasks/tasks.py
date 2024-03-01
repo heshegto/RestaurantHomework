@@ -1,5 +1,5 @@
 import os
-
+import asyncio
 from celery import Celery
 
 from .services import start
@@ -13,10 +13,8 @@ RABBITMQ_DATABASE_URL = 'pyamqp://{}:{}@{}:{}'.format(
 
 celery_app = Celery('tasks', broker=RABBITMQ_DATABASE_URL)
 
+loop = asyncio.get_event_loop()
 
-# @celery_app.on_after_configure.connect
-# async def setup_periodic_tasks(sender, **kwargs):
-#     sender.add_periodic_task(15.0, await synchronization, name='synchronization')
 celery_app.conf.beat_schedule = {
     'synchronization': {
         'task': 'app.background_tasks.tasks.synchronization',
@@ -27,5 +25,5 @@ celery_app.conf.beat_schedule = {
 
 
 @celery_app.task(default_retry_delay=15, max_retries=None,)
-async def synchronization() -> None:
-    await start()
+def synchronization() -> None:
+    loop.run_until_complete(start())

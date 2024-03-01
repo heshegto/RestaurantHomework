@@ -42,7 +42,10 @@ async def get_base_from_file() -> list[dict[str, list | str]]:
             item['title'] = row[3]
             item['description'] = row[4]
             item['price'] = f'{round(float(row[5]), 2):.2f}'
-            item['sale'] = row[6]
+            if len(row) == 7:
+                item['sale'] = row[6]
+            else:
+                item['sale'] = None
             base_from_file[-1]['child_menu'][-1]['dish'].append(item)
     return base_from_file
 
@@ -93,7 +96,7 @@ class Updater:
                 '''Check if data in database needs update'''
                 flag = True
                 for key in file_item.keys():
-                    if db_item[key] != file_item[key]:
+                    if key != 'sale' and db_item[key] != file_item[key]:
                         flag = False
                 if not flag:
                     update_item = {i: file_item[i] for i in file_item.keys(
@@ -105,7 +108,7 @@ class Updater:
                             self.target_id
                         )
                     invalidation_on_update(self.red, self.target_id, self.parent_id, self.grand_id)
-                    if file_item['sale']:
+                    if 'sale' in file_item.keys() and file_item['sale']:
                         keyword = str(self.target_id)+':sale'
                         await self.red.set(keyword, file_item['sale'])
 
@@ -145,7 +148,7 @@ class Updater:
                     )).id
                 invalidation_on_creation(self.red, parent_id=self.parent_id, grand_id=self.grand_id)
 
-                if file_item['sale']:
+                if 'sale' in file_item.keys():
                     keyword = str(self.target_id) + ':sale'
                     await self.red.set(keyword, file_item['sale'])
 
@@ -195,7 +198,7 @@ class Updater:
 
 async def start() -> None:
     """
-    if you start this function like this `asyncio.run(start())`, it will do it's job, but if start it from celery
+    if you start this function like this `asyncio.run(start())`, it will do its job, but if start it from celery
     it will do nothing. I don't know how to solve it
     """
     data_from_db = jsonable_encoder(await get_base_from_db())
