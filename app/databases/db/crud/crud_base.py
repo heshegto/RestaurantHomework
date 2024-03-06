@@ -18,21 +18,21 @@ class BaseCRUDModel:
             Should be overridden by subclasses!!!
         """
         self.model = BaseModel
-        raise NotImplementedError(f'You must implement __init__ method for model {self.model.__name__}')
+        raise NotImplementedError(f'You must implement __init__ method in {self.__name__} class')
 
     async def read_all_items(self, db: AsyncSession, parent_id: UUID | None = None) -> Query:
         """
             Returns all items of specific type from the database. \n
             Should be overridden by subclasses!!!
         """
-        raise NotImplementedError(f'You must implement read_all_items method for model {self.model.__name__}')
+        raise NotImplementedError(f'You must implement read_all_items method in {self.__name__} class')
 
     async def read_item_by_id(self, db: AsyncSession, target_id: UUID, parent_id: UUID | None = None) -> Query | None:
         """
             Returns only one item of specific type by id from the database. \n
             Should be overridden by subclasses!!!
         """
-        raise NotImplementedError(f'You must implement read_item_by_id method for model {self.model.__name__}')
+        raise NotImplementedError(f'You must implement read_item_by_id method in {self.__name__} class')
 
     async def create_item(self, db: AsyncSession, create_schema: CreateSchema, parent_id: UUID | None) -> Query:
         """Creates new item in database."""
