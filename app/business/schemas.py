@@ -1,6 +1,11 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+"""
+Read schemas are used only for reading. Create schemas are used to validate creation data in creation moment.
+Schemas without anything are used as response models.
+"""
 
 
 class BaseCreate(BaseModel):
@@ -43,3 +48,7 @@ class Dish(Base):
 
 class DishCreate(BaseCreate):
     price: str
+
+    @field_validator('price')
+    def validate_price(cls, value: str) -> str:
+        return f'{round(float(value), 2):.2f}'

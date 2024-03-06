@@ -10,10 +10,12 @@ from .crud_base import BaseCRUDModel
 
 
 class SubMenuCRUD(BaseCRUDModel):
+    """Class for CRUD operations on SubMenus"""
     def __init__(self) -> None:
         self.model = SubMenu
 
-    async def read_all_items(self, db: AsyncSession, parent_id: UUID | None) -> Query:
+    async def read_all_items(self, db: AsyncSession, parent_id: UUID | None = None) -> Query:
+        """Returns all SubMenus in the database for a given Menu id."""
         query = select(
             self.model.id,
             self.model.title,
@@ -25,12 +27,8 @@ class SubMenuCRUD(BaseCRUDModel):
         result = (await db.execute(query)).all()
         return result
 
-    async def read_item_by_id(
-            self,
-            db: AsyncSession,
-            target_id: UUID | None,
-            parent_id: UUID | None = None
-    ) -> Query | None:
+    async def read_item_by_id(self, db: AsyncSession, target_id: UUID, parent_id: UUID | None = None) -> Query | None:
+        """Returns a single SubMenu from the database for a given SubMenu and Menu id's."""
         query = select(
             self.model.id,
             self.model.title,
